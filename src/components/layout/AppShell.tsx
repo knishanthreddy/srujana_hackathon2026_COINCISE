@@ -6,6 +6,7 @@ import { Header } from "./Header";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { addFinancialRecord } from "@/lib/data-service";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -20,12 +21,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleCreateRecord = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formAmount || isNaN(Number(formAmount))) return;
+    const amt = Number(formAmount);
+    if (!formAmount || isNaN(amt) || amt <= 0) return;
 
-    setIsRecordModalOpen(false);
-    setToastMessage(`Success: Recorded ${formType} of ₹${Number(formAmount).toLocaleString("en-IN")}`);
-    setFormAmount("");
-    setFormDesc("");
+    const res = addFinancialRecord({
+      date: new Date().toISOString().split("T")[0],
+      type: formType,
+      category: formCategory,
+      amount: amt,
+      paidAmount: amt,
+      paymentStatus: "completed",
+      description: formDesc.trim() || `${formType === "income" ? "Cash Received" : "Disbursement"} (${formCategory})`,
+      paymentMethod: "Bank Transfer (NEFT)",
+    });
+
+    if (res.success) {
+      setIsRecordModalOpen(false);
+      setToastMessage(`Success: Recorded ${formType} of ₹${amt.toLocaleString("en-IN")} into local ledger`);
+      setFormAmount("");
+      setFormDesc("");
+    } else {
+      setToastMessage("Failed to record: please verify input values");
+    }
 
     setTimeout(() => {
       setToastMessage(null);

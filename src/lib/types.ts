@@ -1,5 +1,7 @@
 export type TransactionType = 'income' | 'expense';
 
+export type PaymentStatus = 'expected' | 'partially_paid' | 'completed';
+
 export type RecordStatus = 'cleared' | 'pending' | 'reconciled';
 
 export interface FinancialRecord {
@@ -8,10 +10,15 @@ export interface FinancialRecord {
   type: TransactionType;
   category: string;
   amount: number;
+  paidAmount: number;
+  paymentStatus: PaymentStatus;
   description: string;
   paymentMethod: string;
-  status: RecordStatus;
+  status?: RecordStatus;
   reference?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type InvoiceStatus = 'paid' | 'pending' | 'partially_paid' | 'overdue';

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Wallet,
@@ -51,11 +51,35 @@ import {
   DEMO_ALERTS,
 } from "@/lib/demo-data";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import {
+  getFinancialRecords,
+  subscribeToFinancialRecords,
+  calculateFinancialTotals,
+} from "@/lib/data-service";
+import { FinancialRecord } from "@/lib/types";
 
 type Horizon = 7 | 30 | 60 | 90;
 
 export default function DashboardPage() {
   const [horizon, setHorizon] = useState<Horizon>(30);
+  const [records, setRecords] = useState<FinancialRecord[]>(DEMO_RECORDS);
+
+  // Subscribe to live records from shared data service
+  useEffect(() => {
+    setRecords(getFinancialRecords());
+    const unsubscribe = subscribeToFinancialRecords((updated) => {
+      setRecords(updated);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Compute live totals strictly segregating cleared vs expected
+  const recordTotals = useMemo(() => calculateFinancialTotals(records), [records]);
+  const baselineTotals = useMemo(() => calculateFinancialTotals(DEMO_RECORDS), []);
+
+  // Compute dynamic live available cash: base cash + additional net cleared cash from user changes
+  const netDelta = recordTotals.netClearedCash - baselineTotals.netClearedCash;
+  const currentAvailableCash = Math.max(0, DEMO_SUMMARY.availableCash + netDelta);
 
   // Filter forecast points according to selected horizon
   const displayedForecast = DEMO_FORECAST_POINTS.filter(
@@ -136,7 +160,7 @@ export default function DashboardPage() {
         {/* Available Real Cash */}
         <StatCard
           title="Current Cash"
-          value={formatCurrency(DEMO_SUMMARY.availableCash)}
+          value={formatCurrency(currentAvailableCash)}
           subtitle="Real cleared bank funds"
           icon={<Wallet className="w-5 h-5 text-emerald-600" />}
           variant="success"
@@ -567,7 +591,7 @@ export default function DashboardPage() {
 
           <CardContent className="pt-0 space-y-3">
             <div className="divide-y divide-slate-100">
-              {DEMO_RECORDS.slice(0, 4).map((rec) => (
+              {records.slice(0, 5).map((rec) => (
                 <div key={rec.id} className="py-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div
@@ -587,9 +611,21 @@ export default function DashboardPage() {
                       <p className="text-xs font-semibold text-slate-900 line-clamp-1">
                         {rec.description}
                       </p>
-                      <p className="text-[11px] text-slate-500">
-                        {rec.category} • {formatDate(rec.date)}
-                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[11px] text-slate-500">
+                          {rec.category} • {formatDate(rec.date)}
+                        </span>
+                        {rec.paymentStatus === "expected" && (
+                          <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded font-medium border border-blue-200">
+                            Expected
+                          </span>
+                        )}
+                        {rec.paymentStatus === "partially_paid" && (
+                          <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-medium border border-amber-200">
+                            Partially Cleared
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -602,7 +638,11 @@ export default function DashboardPage() {
                       {rec.type === "income" ? "+ " : "- "}
                       {formatCurrency(rec.amount)}
                     </span>
-                    <p className="text-[10px] text-slate-400 font-mono">{rec.reference}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">
+                      {rec.paidAmount > 0
+                        ? `Cleared: ${formatCurrency(rec.paidAmount)}`
+                        : "Uncollected"}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -611,7 +651,7 @@ export default function DashboardPage() {
             <div className="pt-2">
               <Link href="/records" className="block">
                 <Button variant="outline" size="sm" className="w-full text-xs">
-                  View Full Cash Ledger ({DEMO_RECORDS.length} Transactions)
+                  View Full Cash Ledger ({records.length} Transactions)
                 </Button>
               </Link>
             </div>
