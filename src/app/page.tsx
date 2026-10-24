@@ -55,27 +55,46 @@ import {
   getFinancialRecords,
   subscribeToFinancialRecords,
   calculateFinancialTotals,
+  getReceivables,
+  subscribeToReceivables,
+  calculateReceivablesTotals,
+  getPayables,
+  subscribeToPayables,
+  calculatePayablesTotals,
 } from "@/lib/data-service";
-import { FinancialRecord } from "@/lib/types";
+import { FinancialRecord, Receivable, Payable } from "@/lib/types";
 
 type Horizon = 7 | 30 | 60 | 90;
 
 export default function DashboardPage() {
   const [horizon, setHorizon] = useState<Horizon>(30);
   const [records, setRecords] = useState<FinancialRecord[]>(DEMO_RECORDS);
+  const [receivables, setReceivables] = useState<Receivable[]>(DEMO_RECEIVABLES);
+  const [payables, setPayables] = useState<Payable[]>(DEMO_PAYABLES);
 
-  // Subscribe to live records from shared data service
+  // Subscribe to live records, receivables, and payables from shared data service
   useEffect(() => {
     setRecords(getFinancialRecords());
-    const unsubscribe = subscribeToFinancialRecords((updated) => {
-      setRecords(updated);
-    });
-    return () => unsubscribe();
+    setReceivables(getReceivables());
+    setPayables(getPayables());
+
+    const unRecs = subscribeToFinancialRecords(setRecords);
+    const unReceivables = subscribeToReceivables(setReceivables);
+    const unPayables = subscribeToPayables(setPayables);
+
+    return () => {
+      unRecs();
+      unReceivables();
+      unPayables();
+    };
   }, []);
 
   // Compute live totals strictly segregating cleared vs expected
   const recordTotals = useMemo(() => calculateFinancialTotals(records), [records]);
   const baselineTotals = useMemo(() => calculateFinancialTotals(DEMO_RECORDS), []);
+
+  const recTotals = useMemo(() => calculateReceivablesTotals(receivables), [receivables]);
+  const payTotals = useMemo(() => calculatePayablesTotals(payables), [payables]);
 
   // Compute dynamic live available cash: base cash + additional net cleared cash from user changes
   const netDelta = recordTotals.netClearedCash - baselineTotals.netClearedCash;
@@ -190,8 +209,8 @@ export default function DashboardPage() {
         {/* Outstanding Receivables */}
         <StatCard
           title="Outstanding Receivables"
-          value={formatCurrency(DEMO_SUMMARY.outstandingReceivables)}
-          subtitle={`${DEMO_SUMMARY.overdueReceivablesCount} invoices overdue`}
+          value={formatCurrency(recTotals.totalBalanceDue)}
+          subtitle={`${recTotals.overdueCount} invoices overdue`}
           icon={<ReceiptText className="w-5 h-5 text-amber-600" />}
           variant="warning"
           trend={{ value: "Action Required", isPositive: false }}
@@ -200,8 +219,8 @@ export default function DashboardPage() {
         {/* Outstanding Payables */}
         <StatCard
           title="Outstanding Payables"
-          value={formatCurrency(DEMO_SUMMARY.outstandingPayables)}
-          subtitle={`${DEMO_SUMMARY.overduePayablesCount} past vendor due`}
+          value={formatCurrency(payTotals.totalBalanceDue)}
+          subtitle={`${payTotals.overdueCount} past vendor due`}
           icon={<ArrowUpRight className="w-5 h-5 text-rose-600" />}
           variant="danger"
           trend={{ value: "Liabilities", isPositive: false }}
@@ -450,7 +469,7 @@ export default function DashboardPage() {
 
           <CardContent className="pt-0 space-y-3">
             <div className="divide-y divide-slate-100">
-              {DEMO_PAYABLES.map((bill) => (
+              {payables.slice(0, 5).map((bill) => (
                 <div key={bill.id} className="py-3 flex items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
@@ -488,7 +507,7 @@ export default function DashboardPage() {
             <div className="pt-2">
               <Link href="/payables" className="block">
                 <Button variant="outline" size="sm" className="w-full text-xs">
-                  View All Scheduled Outflows ({DEMO_PAYABLES.length} Items)
+                  View All Scheduled Outflows ({payables.length} Items)
                 </Button>
               </Link>
             </div>
