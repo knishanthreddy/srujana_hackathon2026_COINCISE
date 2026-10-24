@@ -12,21 +12,31 @@ import {
   TrendingUp,
   ShieldCheck,
   ChevronRight,
-  ExternalLink,
   PlusCircle,
   FlaskConical,
   Scale,
   Compass,
+  BarChart3,
+  Calendar,
+  AlertOctagon,
+  Info,
+  DollarSign,
+  ArrowRight,
+  Layers,
+  Sparkles,
 } from "lucide-react";
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  Legend,
 } from "recharts";
 import { StatCard } from "@/components/ui/StatCard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -42,172 +52,194 @@ import {
 } from "@/lib/demo-data";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
+type Horizon = 7 | 30 | 60 | 90;
+
 export default function DashboardPage() {
-  const [forecastHorizon, setForecastHorizon] = useState<30 | 60 | 90>(30);
+  const [horizon, setHorizon] = useState<Horizon>(30);
 
   // Filter forecast points according to selected horizon
   const displayedForecast = DEMO_FORECAST_POINTS.filter(
-    (pt) => pt.dayOffset <= forecastHorizon
+    (pt) => pt.dayOffset <= horizon
   );
+
+  // Horizon-specific metrics
+  const horizonInflows = displayedForecast.reduce((sum, pt) => sum + pt.projectedInflow, 0);
+  const horizonOutflows = displayedForecast.reduce((sum, pt) => sum + pt.projectedOutflow, 0);
+  const horizonClosingCash =
+    displayedForecast[displayedForecast.length - 1]?.closingCash ?? DEMO_SUMMARY.availableCash;
+  const lowestCashInHorizon = Math.min(
+    ...displayedForecast.map((pt) => pt.closingCash)
+  );
+  const isReserveBreachedInHorizon = lowestCashInHorizon < DEMO_SUMMARY.minimumReserve;
+
+  // Chart data for Inflows vs Outflows (only days with flows)
+  const flowsChartData = displayedForecast
+    .filter((pt) => pt.dayOffset > 0)
+    .map((pt) => ({
+      date: pt.date,
+      dayLabel: `Day +${pt.dayOffset}`,
+      Inflows: pt.projectedInflow,
+      Outflows: pt.projectedOutflow,
+      netFlow: pt.netCashFlow,
+    }));
 
   return (
     <div className="space-y-6">
-      {/* Top Banner: Demo Mode & Financial Integrity Notice */}
+      {/* 1. Executive Briefing Banner & Fictional Demo Mode Tag */}
       <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-2xl p-5 text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 border border-blue-800/40">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/30 text-blue-300 border border-blue-400/30">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/30 text-blue-300 border border-blue-400/30 tracking-wider uppercase">
               EXECUTIVE BRIEFING
             </span>
-            <span className="text-xs text-slate-300">
-              Last reconciled: Today, 10:45 AM
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 tracking-wider">
+              DEMO MODE • FICTIONAL SAMPLE DATA
+            </span>
+            <span className="text-xs text-slate-400">
+              Company: <strong className="text-white">{DEMO_SUMMARY.businessName}</strong>
             </span>
           </div>
+
           <h2 className="text-xl font-bold tracking-tight text-white">
-            {DEMO_SUMMARY.businessName}
+            Business Liquidity & Forecast Center
           </h2>
-          <p className="text-xs text-slate-300 max-w-2xl">
-            Liquidity is secure for the next 14 days. Projected reserve breach on Day 22 (15 Nov) requires proactive receivables follow-up or scheduled vendor payment pacing.
+          <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+            Realized cash position is stable for the next 14 days. Looking across the 30-day window, a projected minimum reserve breach on <strong>15 Nov (Day 22)</strong> requires proactive receivables follow-up or scheduled vendor payment pacing.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
-          <Link href="/forecast">
-            <Button variant="outline" size="sm" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
-              Forecast Runway
-            </Button>
-          </Link>
-          <Link href="/decision-centre">
-            <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white shadow-md">
-              <Compass className="w-4 h-4 mr-1.5" />
-              Decision Centre
-            </Button>
-          </Link>
+        {/* Quick Horizon Controller on Banner */}
+        <div className="flex flex-col sm:items-end gap-2 shrink-0">
+          <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wide">
+            Forecast Horizon Window:
+          </span>
+          <div className="flex items-center gap-1 bg-slate-800/90 p-1.5 rounded-xl border border-slate-700">
+            {([7, 30, 60, 90] as const).map((days) => (
+              <button
+                key={days}
+                onClick={() => setHorizon(days)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                  horizon === days
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {days}D
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* 6 Core Financial Stat Cards */}
+      {/* 2. Primary Financial Stat Cards (Responsive to Horizon) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {/* 1. Available Cash */}
+        {/* Available Real Cash */}
         <StatCard
-          title="Available Cash"
+          title="Current Cash"
           value={formatCurrency(DEMO_SUMMARY.availableCash)}
-          subtitle="Real bank balance"
+          subtitle="Real cleared bank funds"
           icon={<Wallet className="w-5 h-5 text-emerald-600" />}
           variant="success"
           trend={{ value: "Cleared", isPositive: true }}
         />
 
-        {/* 2. Expected Receipts */}
+        {/* Expected Receipts */}
         <StatCard
-          title="Expected Receipts (30d)"
-          value={formatCurrency(DEMO_SUMMARY.expectedReceipts30d)}
-          subtitle="Inbound customer dues"
+          title={`Expected Receipts (${horizon}d)`}
+          value={formatCurrency(horizonInflows)}
+          subtitle="Customer dues scheduled"
           icon={<ArrowDownLeft className="w-5 h-5 text-blue-600" />}
           variant="primary"
           trend={{ value: "Inflows", isPositive: true }}
         />
 
-        {/* 3. Outstanding Receivables */}
+        {/* Upcoming Expenses */}
         <StatCard
-          title="Outstanding Invoices"
+          title={`Upcoming Expenses (${horizon}d)`}
+          value={formatCurrency(horizonOutflows)}
+          subtitle="Committed disbursements"
+          icon={<Clock className="w-5 h-5 text-slate-700" />}
+          variant="neutral"
+          trend={{ value: "Outflows", isPositive: false }}
+        />
+
+        {/* Outstanding Receivables */}
+        <StatCard
+          title="Outstanding Receivables"
           value={formatCurrency(DEMO_SUMMARY.outstandingReceivables)}
-          subtitle={`${DEMO_SUMMARY.overdueReceivablesCount} overdue invoices`}
+          subtitle={`${DEMO_SUMMARY.overdueReceivablesCount} invoices overdue`}
           icon={<ReceiptText className="w-5 h-5 text-amber-600" />}
           variant="warning"
           trend={{ value: "Action Required", isPositive: false }}
         />
 
-        {/* 4. Outstanding Payables */}
+        {/* Outstanding Payables */}
         <StatCard
           title="Outstanding Payables"
           value={formatCurrency(DEMO_SUMMARY.outstandingPayables)}
           subtitle={`${DEMO_SUMMARY.overduePayablesCount} past vendor due`}
           icon={<ArrowUpRight className="w-5 h-5 text-rose-600" />}
           variant="danger"
-          trend={{ value: "Obligations", isPositive: false }}
+          trend={{ value: "Liabilities", isPositive: false }}
         />
 
-        {/* 5. Upcoming Expenses (30d) */}
+        {/* Projected Closing Cash at end of Horizon */}
         <StatCard
-          title="Upcoming Outflows (30d)"
-          value={formatCurrency(DEMO_SUMMARY.upcomingExpenses30d)}
-          subtitle="Committed ops & payroll"
-          icon={<Clock className="w-5 h-5 text-slate-700" />}
-          variant="neutral"
-        />
-
-        {/* 6. Projected Cash (30d) */}
-        <StatCard
-          title="Projected Cash (Day 30)"
-          value={formatCurrency(DEMO_SUMMARY.projectedCash30d)}
-          subtitle={`Target: ${formatCurrency(DEMO_SUMMARY.minimumReserve)}`}
+          title={`Projected Cash (Day ${horizon})`}
+          value={formatCurrency(horizonClosingCash)}
+          subtitle={`Floor: ${formatCurrency(DEMO_SUMMARY.minimumReserve)}`}
           icon={<TrendingUp className="w-5 h-5 text-indigo-600" />}
-          variant="primary"
-          trend={{ value: "Above Min", isPositive: true }}
+          variant={isReserveBreachedInHorizon ? "warning" : "primary"}
+          trend={{
+            value: isReserveBreachedInHorizon ? "Dip Detected" : "Above Floor",
+            isPositive: !isReserveBreachedInHorizon,
+          }}
         />
       </div>
 
-      {/* Main Grid: Forecast Chart & Active Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Cash-Flow Trajectory Chart (2 cols) */}
-        <Card className="lg:col-span-2 flex flex-col justify-between">
+      {/* 3. Dual Recharts Financial Visualizations */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Chart 1: Cash-Flow Trajectory (AreaChart) */}
+        <Card className="flex flex-col justify-between">
           <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle>Cash-Flow Forecast Trajectory</CardTitle>
-                <Badge variant="primary" size="sm">
-                  Closing = Opening + Inflows - Outflows
+                <Badge variant={isReserveBreachedInHorizon ? "warning" : "success"} size="sm">
+                  {isReserveBreachedInHorizon ? "⚠️ Reserve Dip" : "✓ Healthy"}
                 </Badge>
               </div>
               <CardDescription>
-                Visualizing projected cash balance versus minimum safety reserve (₹2,50,000)
+                Projected closing balance over {horizon} days versus ₹2.5L minimum reserve floor
               </CardDescription>
             </div>
 
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-              <button
-                onClick={() => setForecastHorizon(30)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
-                  forecastHorizon === 30
-                    ? "bg-white text-blue-700 shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                30 Days
-              </button>
-              <button
-                onClick={() => setForecastHorizon(60)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
-                  forecastHorizon === 60
-                    ? "bg-white text-blue-700 shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                60 Days
-              </button>
-              <button
-                onClick={() => setForecastHorizon(90)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
-                  forecastHorizon === 90
-                    ? "bg-white text-blue-700 shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                90 Days
-              </button>
+              {([7, 30, 60, 90] as const).map((days) => (
+                <button
+                  key={days}
+                  onClick={() => setHorizon(days)}
+                  className={`px-2 py-1 text-xs font-semibold rounded-md transition-all ${
+                    horizon === days
+                      ? "bg-white text-blue-700 shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  {days}D
+                </button>
+              ))}
             </div>
           </CardHeader>
 
           <CardContent className="pt-2">
-            <div className="h-72 w-full">
+            <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={displayedForecast}
                   margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
                 >
                   <defs>
-                    <linearGradient id="cashGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="dashboardCashGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#2563eb" stopOpacity={0.28} />
                       <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
                     </linearGradient>
@@ -254,53 +286,218 @@ export default function DashboardPage() {
                     stroke="#2563eb"
                     strokeWidth={2.5}
                     fillOpacity={1}
-                    fill="url(#cashGradient)"
+                    fill="url(#dashboardCashGradient)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
 
-            <div className="mt-3 p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl flex items-center justify-between text-xs text-amber-900">
+            <div className="mt-3 p-3 bg-slate-50 border border-slate-200/90 rounded-xl flex items-center justify-between text-xs text-slate-700">
+              <span className="text-slate-600">
+                Formula: <strong className="text-slate-900">Closing = Opening + Inflows - Outflows</strong>
+              </span>
+              <span className="text-slate-600">
+                Lowest Trough:{" "}
+                <strong
+                  className={
+                    lowestCashInHorizon < DEMO_SUMMARY.minimumReserve
+                      ? "text-rose-600 font-bold"
+                      : "text-emerald-700 font-bold"
+                  }
+                >
+                  {formatCurrency(lowestCashInHorizon)}
+                </strong>
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Chart 2: Inflows versus Outflows (BarChart) */}
+        <Card className="flex flex-col justify-between">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
+            <div>
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>
-                  <strong>Forecast Alert:</strong> Balance dips to ₹2,00,000 on Day 22 (breaching the ₹2,50,000 reserve limit).
-                </span>
+                <CardTitle>Inflows vs. Outflows Schedule</CardTitle>
+                <Badge variant="primary" size="sm">
+                  {horizon} Days
+                </Badge>
               </div>
+              <CardDescription>
+                Comparison of expected cash receipts vs. scheduled disbursements
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />
+                <span className="text-slate-600 font-medium">Inflows</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block" />
+                <span className="text-slate-600 font-medium">Outflows</span>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="pt-2">
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={flowsChartData}
+                  margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="dayLabel"
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    axisLine={{ stroke: "#cbd5e1" }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(val: number, name: string) => [
+                      formatCurrency(val),
+                      name === "Inflows" ? "Projected Receipts" : "Scheduled Expenses",
+                    ]}
+                    labelFormatter={(label) => `${label}`}
+                    contentStyle={{
+                      backgroundColor: "#0f172a",
+                      borderRadius: "8px",
+                      color: "#fff",
+                      border: "none",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Bar dataKey="Inflows" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Outflows" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="mt-3 p-3 bg-slate-50 border border-slate-200/90 rounded-xl flex items-center justify-between text-xs text-slate-700">
+              <span className="text-slate-600">
+                Period Net Inflow:{" "}
+                <strong
+                  className={
+                    horizonInflows - horizonOutflows >= 0
+                      ? "text-emerald-700"
+                      : "text-rose-600"
+                  }
+                >
+                  {horizonInflows - horizonOutflows >= 0 ? "+" : ""}
+                  {formatCurrency(horizonInflows - horizonOutflows)}
+                </strong>
+              </span>
               <Link
-                href="/decision-centre"
-                className="font-semibold text-blue-700 hover:text-blue-900 inline-flex items-center gap-1 shrink-0 ml-2"
+                href="/reports"
+                className="font-semibold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
               >
-                Resolve Risk <ChevronRight className="w-3.5 h-3.5" />
+                Detailed Breakdown <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 4. Middle Section: Upcoming Expenses & Smart Financial Alerts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Upcoming Committed Expenses */}
+        <Card className="flex flex-col justify-between">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-slate-700" />
+                  <span>Upcoming Scheduled Expenses</span>
+                </CardTitle>
+                <CardDescription>
+                  Impending supplier bills, lease charges & operational liabilities
+                </CardDescription>
+              </div>
+              <Link href="/payables" className="text-xs text-blue-600 hover:underline font-semibold">
+                Manage Payables
+              </Link>
+            </div>
+          </CardHeader>
+
+          <CardContent className="pt-0 space-y-3">
+            <div className="divide-y divide-slate-100">
+              {DEMO_PAYABLES.map((bill) => (
+                <div key={bill.id} className="py-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold text-slate-900">{bill.vendorName}</p>
+                      <Badge
+                        variant={
+                          bill.status === "overdue"
+                            ? "danger"
+                            : bill.status === "partially_paid"
+                            ? "warning"
+                            : "neutral"
+                        }
+                        size="sm"
+                      >
+                        {bill.status === "overdue"
+                          ? "Overdue"
+                          : `Due ${formatDate(bill.dueDate).slice(0, 6)}`}
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {bill.category} • Bill #{bill.invoiceNumber}
+                    </p>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="text-xs font-bold text-rose-600 block">
+                      {formatCurrency(bill.balanceDue)}
+                    </span>
+                    <span className="text-[10px] text-slate-400">Balance Due</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2">
+              <Link href="/payables" className="block">
+                <Button variant="outline" size="sm" className="w-full text-xs">
+                  View All Scheduled Outflows ({DEMO_PAYABLES.length} Items)
+                </Button>
               </Link>
             </div>
           </CardContent>
         </Card>
 
-        {/* Financial Alerts & Triggers (1 col) */}
+        {/* Smart Financial Alerts */}
         <Card className="flex flex-col justify-between">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <span>Smart Alerts</span>
-                <Badge variant="danger" size="sm">
-                  {DEMO_ALERTS.length} Active
-                </Badge>
-              </CardTitle>
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  <span>Smart Financial Alerts</span>
+                  <Badge variant="danger" size="sm">
+                    {DEMO_ALERTS.length} Active
+                  </Badge>
+                </CardTitle>
+                <CardDescription>
+                  Automated risk triggers from cash-flow models & invoice aging
+                </CardDescription>
+              </div>
               <Link href="/alerts" className="text-xs text-blue-600 hover:underline font-semibold">
-                View All
+                Alerts Center
               </Link>
             </div>
-            <CardDescription>
-              Predictive triggers derived from cash forecast & invoices
-            </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-3 pt-0">
+          <CardContent className="pt-0 space-y-3">
             {DEMO_ALERTS.slice(0, 3).map((alert) => (
               <div
                 key={alert.id}
-                className="p-3 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-slate-50 transition-colors space-y-1.5"
+                className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-slate-50 transition-colors space-y-1.5"
               >
                 <div className="flex items-center justify-between">
                   <Badge
@@ -315,10 +512,16 @@ export default function DashboardPage() {
                   >
                     {alert.severity.toUpperCase()}
                   </Badge>
-                  <span className="text-[10px] text-slate-600">{formatDate(alert.date)}</span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {formatDate(alert.date)}
+                  </span>
                 </div>
+
                 <h5 className="text-xs font-bold text-slate-800">{alert.title}</h5>
-                <p className="text-[11px] text-slate-600 line-clamp-2">{alert.message}</p>
+                <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">
+                  {alert.message}
+                </p>
+
                 {alert.actionLink && (
                   <Link
                     href={alert.actionLink}
@@ -330,33 +533,39 @@ export default function DashboardPage() {
               </div>
             ))}
 
-            <Link href="/alerts" className="block pt-1">
-              <Button variant="outline" size="sm" className="w-full text-xs">
-                Inspect All {DEMO_ALERTS.length} Alerts
-              </Button>
-            </Link>
+            <div className="pt-2">
+              <Link href="/alerts" className="block">
+                <Button variant="outline" size="sm" className="w-full text-xs">
+                  Inspect All {DEMO_ALERTS.length} Triggered Alerts
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Bottom Grid: Recent Transactions & Priority Receivables / Disputes */}
+      {/* 5. Lower Section: Recent Cleared Transactions & Navigation Shortcuts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Cleared Records */}
-        <Card>
+        {/* Recent Cleared Bank Transactions */}
+        <Card className="flex flex-col justify-between">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Recent Actual Transactions</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <ReceiptText className="w-4 h-4 text-slate-700" />
+                  <span>Recent Actual Transactions</span>
+                </CardTitle>
                 <CardDescription>
-                  Cleared bank ledger entries (Actuals only)
+                  Cleared bank ledger entries • Strict actuals isolation
                 </CardDescription>
               </div>
               <Link href="/records" className="text-xs text-blue-600 hover:underline font-semibold">
-                All Records
+                Ledger
               </Link>
             </div>
           </CardHeader>
-          <CardContent className="pt-0">
+
+          <CardContent className="pt-0 space-y-3">
             <div className="divide-y divide-slate-100">
               {DEMO_RECORDS.slice(0, 4).map((rec) => (
                 <div key={rec.id} className="py-3 flex items-center justify-between gap-3">
@@ -375,8 +584,10 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-900">{rec.description}</p>
-                      <p className="text-[11px] text-slate-600">
+                      <p className="text-xs font-semibold text-slate-900 line-clamp-1">
+                        {rec.description}
+                      </p>
+                      <p className="text-[11px] text-slate-500">
                         {rec.category} • {formatDate(rec.date)}
                       </p>
                     </div>
@@ -391,82 +602,150 @@ export default function DashboardPage() {
                       {rec.type === "income" ? "+ " : "- "}
                       {formatCurrency(rec.amount)}
                     </span>
-                    <p className="text-[10px] text-slate-600 font-mono">{rec.reference}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">{rec.reference}</p>
                   </div>
                 </div>
               ))}
             </div>
+
+            <div className="pt-2">
+              <Link href="/records" className="block">
+                <Button variant="outline" size="sm" className="w-full text-xs">
+                  View Full Cash Ledger ({DEMO_RECORDS.length} Transactions)
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Priority Action Items: Overdue Receivables & FairResolve */}
-        <Card>
+        {/* Quick Navigation & Operational Shortcuts Hub */}
+        <Card className="flex flex-col justify-between">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Disputed & Overdue Receivables</CardTitle>
-                <CardDescription>
-                  Invoices requiring collection intervention or dispute handling
-                </CardDescription>
-              </div>
-              <Link href="/receivables" className="text-xs text-blue-600 hover:underline font-semibold">
-                Manage Invoices
-              </Link>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-blue-600" />
+                <span>Decision & Navigation Shortcuts</span>
+              </CardTitle>
+              <CardDescription>
+                Direct access to core financial management workstations
+              </CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="pt-0 space-y-3">
-            {DEMO_RECEIVABLES.filter((ar) => ar.status === "overdue").map((ar) => (
-              <div
-                key={ar.id}
-                className="p-3.5 rounded-xl border border-slate-200/90 bg-white flex items-center justify-between gap-3"
+
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 gap-3">
+              {/* Shortcut 1: Forecast */}
+              <Link
+                href="/forecast"
+                className="p-3.5 rounded-xl border border-slate-200/90 bg-white hover:border-blue-400 hover:shadow-sm transition-all group flex flex-col justify-between"
               >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-900">{ar.customerName}</span>
-                    <Badge variant="danger" size="sm">
-                      {ar.daysOverdue}d Overdue
-                    </Badge>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <TrendingUp className="w-4 h-4" />
                   </div>
-                  <p className="text-[11px] text-slate-600 mt-0.5">
-                    Inv: {ar.invoiceNumber} • Due: {formatDate(ar.dueDate)}
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Forecast Runway</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    90-day predictive balance model
                   </p>
                 </div>
+              </Link>
 
-                <div className="text-right">
-                  <span className="text-xs font-bold text-rose-600">
-                    {formatCurrency(ar.balanceDue)}
-                  </span>
-                  <div className="mt-1">
-                    {ar.notes?.includes("FairResolve") ? (
-                      <Link href="/fairresolve">
-                        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 text-indigo-700 border-indigo-200 bg-indigo-50">
-                          <Scale className="w-3 h-3 mr-1" />
-                          FairResolve
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Link href="/receivables">
-                        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2">
-                          Follow Up
-                        </Button>
-                      </Link>
-                    )}
+              {/* Shortcut 2: Scenario Lab */}
+              <Link
+                href="/scenarios"
+                className="p-3.5 rounded-xl border border-slate-200/90 bg-white hover:border-purple-400 hover:shadow-sm transition-all group flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <FlaskConical className="w-4 h-4" />
                   </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 transition-colors" />
                 </div>
-              </div>
-            ))}
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Scenario Lab</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Stress-test shocks & delays
+                  </p>
+                </div>
+              </Link>
 
-            <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200/70 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Scale className="w-4 h-4 text-blue-700 shrink-0" />
-                <span className="text-xs text-blue-900">
-                  Unresolved commercial disputes? Use <strong>FairResolve</strong> for structured settlement offers.
-                </span>
-              </div>
-              <Link href="/fairresolve">
-                <Button size="sm" variant="primary" className="h-7 text-xs px-2.5">
-                  Open
-                </Button>
+              {/* Shortcut 3: Decision Centre */}
+              <Link
+                href="/decision-centre"
+                className="p-3.5 rounded-xl border border-slate-200/90 bg-white hover:border-emerald-400 hover:shadow-sm transition-all group flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Compass className="w-4 h-4" />
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Decision Centre</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Compare liquidity fixes
+                  </p>
+                </div>
+              </Link>
+
+              {/* Shortcut 4: FairResolve */}
+              <Link
+                href="/fairresolve"
+                className="p-3.5 rounded-xl border border-slate-200/90 bg-white hover:border-indigo-400 hover:shadow-sm transition-all group flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Scale className="w-4 h-4" />
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">FairResolve</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Dispute mediation & ODR
+                  </p>
+                </div>
+              </Link>
+
+              {/* Shortcut 5: Receivables */}
+              <Link
+                href="/receivables"
+                className="p-3.5 rounded-xl border border-slate-200/90 bg-white hover:border-amber-400 hover:shadow-sm transition-all group flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <ArrowDownLeft className="w-4 h-4" />
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-600 transition-colors" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Receivables Aging</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Track customer invoices
+                  </p>
+                </div>
+              </Link>
+
+              {/* Shortcut 6: Reports & Analytics */}
+              <Link
+                href="/reports"
+                className="p-3.5 rounded-xl border border-slate-200/90 bg-white hover:border-cyan-400 hover:shadow-sm transition-all group flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <BarChart3 className="w-4 h-4" />
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-cyan-600 transition-colors" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Reports & CSV Export</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Download datasets & audits
+                  </p>
+                </div>
               </Link>
             </div>
           </CardContent>
