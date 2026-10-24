@@ -15,7 +15,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { AuthModal } from "@/components/auth/AuthModal";
 import { DEMO_SUMMARY } from "@/lib/demo-data";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -70,7 +72,9 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
 };
 
 export function Header({ onToggleSidebar, onOpenNewRecordModal }: HeaderProps) {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const pathname = usePathname();
+  const isCloud = isSupabaseConfigured();
   const currentMeta = pageTitles[pathname] || {
     title: "COINCISE Finance",
     subtitle: "AI Business Finance & Decision Support",
@@ -100,16 +104,22 @@ export function Header({ onToggleSidebar, onOpenNewRecordModal }: HeaderProps) {
 
       {/* Right: Business Switcher & Actions */}
       <div className="flex items-center gap-2.5">
-        {/* Active Business Badge */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100/90 border border-slate-200/60 text-xs">
+        {/* Active Business Badge / Auth Trigger */}
+        <button
+          onClick={() => setIsAuthModalOpen(true)}
+          className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200/60 text-xs transition-colors"
+          title="Manage Business Profile & Cloud Sync"
+        >
           <Building2 className="w-3.5 h-3.5 text-blue-600" />
           <span className="font-semibold text-slate-800 max-w-[160px] truncate">
             {DEMO_SUMMARY.businessName}
           </span>
-          <span className="px-1.5 py-0.2 text-[10px] bg-emerald-100 text-emerald-800 font-medium rounded">
-            Demo
+          <span className={`px-1.5 py-0.2 text-[10px] font-semibold rounded ${
+            isCloud ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"
+          }`}>
+            {isCloud ? "Cloud" : "Demo"}
           </span>
-        </div>
+        </button>
 
         {/* Quick Add Record Button */}
         {onOpenNewRecordModal && (
@@ -137,10 +147,16 @@ export function Header({ onToggleSidebar, onOpenNewRecordModal }: HeaderProps) {
         </Link>
 
         {/* User Avatar */}
-        <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs ring-2 ring-slate-100">
+        <button
+          onClick={() => setIsAuthModalOpen(true)}
+          className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs ring-2 ring-slate-100 hover:ring-blue-400 transition-all"
+          title="Account Settings"
+        >
           AD
-        </div>
+        </button>
       </div>
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </header>
   );
 }

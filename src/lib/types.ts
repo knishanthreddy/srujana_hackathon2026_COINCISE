@@ -110,18 +110,40 @@ export type DisputeStatus =
   | 'resolved'
   | 'escalated_to_odr';
 
+export interface DisputeActivityLog {
+  id: string;
+  timestamp: string;
+  actor: string;
+  action: string;
+  details: string;
+}
+
+export interface DisputeSettlementProgress {
+  agreedAmount: number;
+  paidAmount: number;
+  paymentStatus: 'pending' | 'partially_paid' | 'completed';
+  dueDate?: string;
+  lastPaymentDate?: string;
+}
+
 export interface DisputeCase {
   id: string;
   caseNumber: string;
   counterpartyName: string;
   disputeAmount: number;
   invoiceNumber: string;
+  receivableId?: string;
   originalDueDate: string;
   issueCategory: 'delayed_payment' | 'defective_goods' | 'deduction_unauthorized' | 'scope_dispute';
   status: DisputeStatus;
   lastUpdated: string;
   settlementOfferAmount?: number;
   settlementTerms?: string;
+  buyerResponse?: string;
+  sellerResponse?: string;
+  ruleSummary?: string;
+  settlementPaymentProgress?: DisputeSettlementProgress;
+  activityLogs?: DisputeActivityLog[];
   evidenceItems: {
     id: string;
     title: string;

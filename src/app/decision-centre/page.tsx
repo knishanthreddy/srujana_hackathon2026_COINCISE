@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Compass,
@@ -12,6 +12,11 @@ import {
   ArrowRight,
   Sparkles,
   Zap,
+  Info,
+  Scale,
+  DollarSign,
+  Layers,
+  Sliders,
 } from "lucide-react";
 import {
   LineChart,
@@ -22,282 +27,556 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  Legend,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { DEMO_DECISIONS, DEMO_FORECAST_POINTS, DEMO_SUMMARY } from "@/lib/demo-data";
-import { DecisionOption } from "@/lib/types";
+import {
+  getLiveForecast,
+  subscribeToFinancialRecords,
+  subscribeToReceivables,
+  subscribeToPayables,
+} from "@/lib/data-service";
+import { ScenarioModifiers, ForecastSummary } from "@/lib/forecast-engine";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
+interface ActionStrategy {
+  id: string;
+  title: string;
+  category: "financing" | "negotiation" | "cost_cutting" | "discounting";
+  description: string;
+  projectedCashImprovement: number;
+  timeToImplement: string;
+  riskLevel: "low" | "medium" | "high";
+  pros: string[];
+  cons: string[];
+  modifiers: ScenarioModifiers;
+}
+
+const STRATEGY_OPTIONS: ActionStrategy[] = [
+  {
+    id: "strat-factoring",
+    title: "TReDS Invoice Discounting (85% Immediate Advance)",
+    category: "financing",
+    description: "Sell approved customer receivables via an MSME TReDS factoring platform for an 85% liquidity advance on Day 3.",
+    projectedCashImprovement: 384000,
+    timeToImplement: "48 - 72 Hours",
+    riskLevel: "low",
+    pros: [
+      "Immediate cash injection directly to current account",
+      "No secondary collateral required under RBI guidelines",
+      "Decisively prevents projected cash reserve breaches",
+    ],
+    cons: ["1.8% factoring discount fee applies (approx ₹6,900)"],
+    modifiers: {
+      customerDelayDays: -12, // Pulls receivables forward by 12 days
+      salesPercentageChange: -1.8, // Net of factoring charge
+    },
+  },
+  {
+    id: "strat-supplier-split",
+    title: "Supplier Payment Split (50% Now, 50% in 25 Days)",
+    category: "negotiation",
+    description: "Negotiate with key suppliers to disburse 50% of outstanding bills today and defer the remaining balance by 25 days.",
+    projectedCashImprovement: 100000,
+    timeToImplement: "24 Hours",
+    riskLevel: "medium",
+    pros: [
+      "Protects liquid buffer through the critical mid-month cash dip",
+      "Maintains vendor goodwill with partial upfront clearance",
+    ],
+    cons: ["Requires vendor finance manager approval"],
+    modifiers: {
+      supplierShiftDays: 14, // Defer payables by 14 days
+    },
+  },
+  {
+    id: "strat-cost-reduction",
+    title: "15% Discretionary Overhead & Consumables Freeze",
+    category: "cost_cutting",
+    description: "Temporarily pause non-essential operational expenses, cutting lubricants buffer, and travel reimbursements.",
+    projectedCashImprovement: 45000,
+    timeToImplement: "Immediate (Day 1)",
+    riskLevel: "low",
+    pros: [
+      "Direct reduction in cash burn with zero external debt",
+      "Strengthens business fiscal discipline",
+    ],
+    cons: ["May defer non-critical machinery servicing"],
+    modifiers: {
+      payrollPercentageChange: 0,
+      salesPercentageChange: 0,
+      supplierShiftDays: 0,
+    },
+  },
+  {
+    id: "strat-early-discount",
+    title: "2% Prompt-Payment Cash Discount Incentive",
+    category: "discounting",
+    description: "Offer all pending customer accounts a 2% discount incentive for payment clearance within 5 calendar days.",
+    projectedCashImprovement: 215000,
+    timeToImplement: "2 - 4 Days",
+    riskLevel: "low",
+    pros: [
+      "Accelerates cash recovery without third-party debt",
+      "Strengthens client relationship and repeat buying",
+    ],
+    cons: ["2% margin concession on billed invoice value"],
+    modifiers: {
+      customerDelayDays: -10, // Pulls collection earlier by 10 days
+      salesPercentageChange: -2, // 2% cash discount
+    },
+  },
+];
+
 export default function DecisionCentrePage() {
-  const [selectedDecisionId, setSelectedDecisionId] = useState<string>("dec-01");
-  const [activeDecisions, setActiveDecisions] = useState<string[]>(["dec-01"]);
+  const [selectedStrategies, setSelectedStrategies] = useState<string[]>([
+    "strat-factoring",
+    "strat-supplier-split",
+  ]);
+  const [activeStrategyDetail, setActiveStrategyDetail] = useState<string>("strat-factoring");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const selectedDecision =
-    DEMO_DECISIONS.find((d) => d.id === selectedDecisionId) || DEMO_DECISIONS[0];
+  // Subscribe to live data changes
+  useEffect(() => {
+    const unsubRecords = subscribeToFinancialRecords(() => setRefreshTrigger((n) => n + 1));
+    const unsubReceivables = subscribeToReceivables(() => setRefreshTrigger((n) => n + 1));
+    const unsubPayables = subscribeToPayables(() => setRefreshTrigger((n) => n + 1));
 
-  const toggleDecision = (id: string) => {
-    setActiveDecisions((prev) =>
+    return () => {
+      unsubRecords();
+      unsubReceivables();
+      unsubPayables();
+    };
+  }, []);
+
+  const toggleStrategy = (id: string) => {
+    setSelectedStrategies((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
-  // Calculate cumulative boost from all selected decisions
-  const chosenDecisions = DEMO_DECISIONS.filter((d) => activeDecisions.includes(d.id));
-  const totalCashImprovement = chosenDecisions.reduce(
-    (sum, d) => sum + d.projectedCashImprovement,
-    0
-  );
+  // 1. Calculate Base-Case Forecast (Zero Actions Applied)
+  const baseForecast: ForecastSummary = useMemo(() => {
+    return getLiveForecast(30, 250000);
+  }, [refreshTrigger]);
 
-  // Generate comparative trajectory data
-  const comparisonData = DEMO_FORECAST_POINTS.filter((p) => p.dayOffset <= 30).map((pt) => {
-    // Decision impact takes effect from day 7 onwards
-    const improvement = pt.dayOffset >= 7 ? totalCashImprovement : 0;
+  // 2. Aggregate Modifiers from All Selected Strategies
+  const aggregatedModifiers: ScenarioModifiers = useMemo(() => {
+    const chosen = STRATEGY_OPTIONS.filter((s) => selectedStrategies.includes(s.id));
+
+    let customerDelay = 0;
+    let salesDelta = 0;
+    let supplierShift = 0;
+
+    for (const strat of chosen) {
+      if (strat.modifiers.customerDelayDays) {
+        customerDelay += strat.modifiers.customerDelayDays;
+      }
+      if (strat.modifiers.salesPercentageChange) {
+        salesDelta += strat.modifiers.salesPercentageChange;
+      }
+      if (strat.modifiers.supplierShiftDays) {
+        supplierShift += strat.modifiers.supplierShiftDays;
+      }
+    }
+
     return {
-      date: pt.date,
-      dayOffset: pt.dayOffset,
-      originalClosing: pt.closingCash,
-      improvedClosing: pt.closingCash + improvement,
+      customerDelayDays: customerDelay,
+      salesPercentageChange: salesDelta,
+      supplierShiftDays: supplierShift,
     };
-  });
+  }, [selectedStrategies]);
 
-  const originalLowest = Math.min(...comparisonData.map((d) => d.originalClosing));
-  const improvedLowest = Math.min(...comparisonData.map((d) => d.improvedClosing));
+  // 3. Calculate Adjusted Forecast with Corrective Interventions Applied
+  const adjustedForecast: ForecastSummary = useMemo(() => {
+    return getLiveForecast(30, 250000, aggregatedModifiers);
+  }, [aggregatedModifiers, refreshTrigger]);
+
+  // Prepare chart comparison data
+  const comparisonData = useMemo(() => {
+    return baseForecast.dailyPoints.map((basePt, idx) => {
+      const adjPt = adjustedForecast.dailyPoints[idx] || basePt;
+      return {
+        date: basePt.date,
+        dayOffset: basePt.dayOffset,
+        baseClosing: basePt.closingCash,
+        adjustedClosing: adjPt.closingCash,
+        minimumReserve: basePt.minimumReserve,
+      };
+    });
+  }, [baseForecast, adjustedForecast]);
+
+  const activeStrategy =
+    STRATEGY_OPTIONS.find((s) => s.id === activeStrategyDetail) || STRATEGY_OPTIONS[0];
+
+  const totalBoost = adjustedForecast.closingCash - baseForecast.closingCash;
+  const lowestDipImprovement = adjustedForecast.lowestCashBalance - baseForecast.lowestCashBalance;
+  const isReserveSaved = !adjustedForecast.isReserveBreached && baseForecast.isReserveBreached;
 
   return (
     <div className="space-y-6">
       {/* Strategic Header Banner */}
-      <div className="p-5 bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 rounded-2xl text-white border border-blue-800/40 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-6 bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 rounded-2xl text-white border border-blue-800/40 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-500/30 text-blue-300 border border-blue-400/30">
-              DECISION LAB
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/30 text-blue-300 border border-blue-400/30">
+              EXECUTIVE DECISION CENTRE
             </span>
             <span className="text-xs text-blue-200">
-              Objective: Overcome Day 22 Reserve Breach
+              Hypothetical Corrective Action & Trade-Off Modeling
             </span>
           </div>
-          <h2 className="text-xl font-bold tracking-tight">Executive Decision & Trade-Off Centre</h2>
-          <p className="text-xs text-slate-300 mt-0.5 max-w-2xl">
-            Compare actionable financing options, supplier payment deferrals, and factoring mechanisms to reinforce cash runway without operational disruption.
+          <h2 className="text-2xl font-extrabold tracking-tight">
+            Liquidity Rescue & Working Capital Optimizer
+          </h2>
+          <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+            Select and compare corrective strategies to resolve projected cash reserve breaches and cash shortages.
+            Simulations evaluate trade-offs without executing actual payments or altering your ledger.
           </p>
         </div>
 
-        <div className="p-3 bg-white/10 rounded-xl border border-white/15 text-right shrink-0">
-          <p className="text-[10px] text-slate-300 uppercase font-semibold">Simulated Cash Boost</p>
-          <p className="text-lg font-bold text-emerald-400">
-            +{formatCurrency(totalCashImprovement)}
+        <div className="p-4 bg-white/10 rounded-xl border border-white/15 text-right shrink-0">
+          <p className="text-[10px] text-slate-300 uppercase font-semibold">Simulated Net Impact</p>
+          <p className={`text-xl font-bold font-mono ${totalBoost >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            {totalBoost >= 0 ? "+" : ""}{formatCurrency(totalBoost)}
           </p>
-          <p className="text-[10px] text-slate-300">
-            {activeDecisions.length} Corrective Action(s) Applied
+          <p className="text-[11px] text-slate-300 mt-0.5">
+            {selectedStrategies.length} Corrective Action(s) Active
           </p>
         </div>
       </div>
 
-      {/* Trajectory Recovery Chart */}
+      {/* Safety Notice */}
+      <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between gap-2 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Info className="w-4 h-4 text-blue-600 shrink-0" />
+          <span>
+            <strong>Simulation Sandbox:</strong> Activating strategies below calculates the hypothetical trajectory recovery using the core forecasting engine. No actual invoices are discounted and no bank disbursements occur.
+          </span>
+        </div>
+        <Badge variant="neutral" className="bg-blue-100 text-blue-800 border-blue-200 shrink-0">
+          Hypothetical Only
+        </Badge>
+      </div>
+
+      {/* Executive Comparison KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: 30-Day Closing Cash */}
+        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Closing Cash (Day 30)
+          </p>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-xl font-bold font-mono text-emerald-600">
+              {formatCurrency(adjustedForecast.closingCash)}
+            </span>
+            <span className="text-xs font-bold font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+              +{formatCurrency(totalBoost)}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Baseline: <span className="font-mono">{formatCurrency(baseForecast.closingCash)}</span>
+          </p>
+        </div>
+
+        {/* Card 2: Lowest Cash Buffer */}
+        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Lowest Projected Dip
+          </p>
+          <div className="flex items-baseline justify-between mt-1">
+            <span className="text-xl font-bold font-mono text-slate-900">
+              {formatCurrency(adjustedForecast.lowestCashBalance)}
+            </span>
+            <span className="text-xs font-bold font-mono text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+              +{formatCurrency(lowestDipImprovement)}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Baseline Dip: <span className="font-mono">{formatCurrency(baseForecast.lowestCashBalance)}</span>
+          </p>
+        </div>
+
+        {/* Card 3: Reserve Breach Status */}
+        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Safety Buffer Protection
+          </p>
+          <div className="mt-1">
+            {!adjustedForecast.isReserveBreached ? (
+              <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-sm">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>Buffer Fully Defended (&gt; ₹2.5L)</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-amber-600 font-bold text-sm">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>Partial Breach: -{formatCurrency(adjustedForecast.maximumReserveShortfall)}</span>
+              </div>
+            )}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            {isReserveSaved ? "Breach eliminated by selected actions" : "Additional actions recommended"}
+          </p>
+        </div>
+
+        {/* Card 4: Shortfall Recovery */}
+        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            Solvency Status (&lt; ₹0)
+          </p>
+          <div className="mt-1">
+            {!adjustedForecast.isCashDeficit ? (
+              <span className="text-xl font-bold font-mono text-emerald-600">
+                100% Solvent
+              </span>
+            ) : (
+              <span className="text-xl font-bold font-mono text-rose-600">
+                Deficit: -{formatCurrency(adjustedForecast.maximumCashShortfall)}
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">
+            Day 0 to Day 30 Trajectory
+          </p>
+        </div>
+      </div>
+
+      {/* Comparative Recovery Chart */}
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <CardTitle>Forecast Recovery with Selected Decision(s)</CardTitle>
+            <CardTitle className="text-base font-bold flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-emerald-600" />
+              <span>Comparative Trajectory: Original Baseline vs Corrective Interventions</span>
+            </CardTitle>
             <CardDescription>
-              Comparing baseline runway vs post-intervention liquidity trajectory over 30 days
+              Shows how the combination of selected actions recovers liquidity and protects the minimum safety reserve
             </CardDescription>
           </div>
-          <div className="flex items-center gap-4 text-xs">
+
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-1 bg-slate-400 rounded" />
-              <span className="text-slate-600">Baseline (Reserve Dip)</span>
+              <span className="w-3 h-0.5 bg-slate-400 inline-block border-t border-dashed border-slate-400" />
+              <span>Original Baseline</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-1 bg-emerald-600 rounded" />
-              <span className="text-emerald-700 font-semibold">With Corrective Plan</span>
+              <span className="w-3 h-0.5 bg-emerald-600 inline-block" />
+              <span className="font-semibold text-emerald-700">With Corrective Actions</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 bg-rose-500 inline-block" />
-              <span className="text-slate-600">Min Reserve (₹2.5L)</span>
+              <span className="w-3 h-0.5 bg-amber-500 inline-block border-t border-dashed border-amber-500" />
+              <span>Safety Reserve (₹2.5L)</span>
             </div>
           </div>
         </CardHeader>
 
         <CardContent>
-          <div className="h-72 w-full">
+          <div className="h-80 w-full pt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={comparisonData}
-                margin={{ top: 15, right: 15, left: 10, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+              <LineChart data={comparisonData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis
                   dataKey="date"
                   tickFormatter={(val) => formatDate(val)}
                   tick={{ fontSize: 11, fill: "#64748b" }}
-                  axisLine={{ stroke: "#cbd5e1" }}
+                  axisLine={{ stroke: "#e2e8f0" }}
                   tickLine={false}
                 />
                 <YAxis
                   tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
                   tick={{ fontSize: 11, fill: "#64748b" }}
-                  axisLine={false}
+                  axisLine={{ stroke: "#e2e8f0" }}
                   tickLine={false}
                 />
                 <Tooltip
                   formatter={(val: number, name: string) => [
                     formatCurrency(val),
-                    name === "originalClosing" ? "Baseline Forecast" : "With Corrective Plan",
+                    name === "adjustedClosing" ? "Adjusted Trajectory" : "Original Baseline",
                   ]}
-                  labelFormatter={(label) => `Forecast Date: ${formatDate(label)}`}
+                  labelFormatter={(lbl) => formatDate(String(lbl))}
                   contentStyle={{
                     backgroundColor: "#0f172a",
-                    borderRadius: "8px",
-                    color: "#fff",
                     border: "none",
-                    fontSize: "12px",
+                    borderRadius: "0.5rem",
+                    color: "#f8fafc",
+                    fontSize: "0.8rem",
                   }}
                 />
                 <ReferenceLine
-                  y={DEMO_SUMMARY.minimumReserve}
-                  stroke="#e11d48"
+                  y={250000}
+                  stroke="#f59e0b"
                   strokeDasharray="4 4"
+                  strokeWidth={1.5}
                   label={{
-                    value: "Reserve Floor (₹2.5L)",
-                    fill: "#e11d48",
+                    value: "Reserve: ₹250k",
+                    fill: "#d97706",
                     fontSize: 10,
-                    position: "insideBottomRight",
+                    position: "right",
                   }}
                 />
+                <ReferenceLine y={0} stroke="#ef4444" strokeWidth={1.5} />
                 <Line
                   type="monotone"
-                  dataKey="originalClosing"
+                  dataKey="baseClosing"
                   stroke="#94a3b8"
                   strokeWidth={2}
-                  dot={{ r: 3 }}
-                  name="originalClosing"
+                  strokeDasharray="4 4"
+                  dot={false}
                 />
                 <Line
                   type="monotone"
-                  dataKey="improvedClosing"
+                  dataKey="adjustedClosing"
                   stroke="#10b981"
                   strokeWidth={3}
-                  dot={{ r: 4 }}
-                  name="improvedClosing"
+                  dot={false}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
-
-          <div className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs text-emerald-900">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              <span>
-                <strong>Outcome:</strong> By applying the chosen corrective actions, lowest cash balance increases from{" "}
-                <span className="font-bold text-rose-600">{formatCurrency(originalLowest)}</span> to{" "}
-                <span className="font-bold text-emerald-700">{formatCurrency(improvedLowest)}</span>, successfully eliminating the reserve breach!
-              </span>
-            </div>
-            <Link href="/forecast">
-              <Button size="sm" variant="outline" className="text-xs h-7 bg-white border-emerald-300 text-emerald-800">
-                View Runway
-              </Button>
-            </Link>
-          </div>
         </CardContent>
       </Card>
 
-      {/* Decision Options Matrix */}
-      <div>
-        <h3 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-          <Zap className="w-4 h-4 text-amber-500" />
-          Comparative Corrective Action Matrix
-        </h3>
+      {/* Action Strategy Cards & Detailed Trade-Off View */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 Cols: Action Toggle Cards */}
+        <div className="lg:col-span-2 space-y-3">
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <Layers className="w-4 h-4 text-blue-600" />
+            <span>Select Actionable Corrective Strategies</span>
+          </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {DEMO_DECISIONS.map((option) => {
-            const isApplied = activeDecisions.includes(option.id);
-            return (
-              <Card
-                key={option.id}
-                className={`transition-all border flex flex-col justify-between ${
-                  isApplied
-                    ? "border-emerald-300 ring-2 ring-emerald-500/20 bg-emerald-50/20"
-                    : "border-slate-200/90 hover:border-slate-300"
-                }`}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {STRATEGY_OPTIONS.map((strategy) => {
+              const isSelected = selectedStrategies.includes(strategy.id);
+              const isInspected = activeStrategyDetail === strategy.id;
+
+              return (
+                <div
+                  key={strategy.id}
+                  onClick={() => setActiveStrategyDetail(strategy.id)}
+                  className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-emerald-50/60 border-emerald-300 ring-2 ring-emerald-500/20 shadow-sm"
+                      : "bg-white border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="text-xs font-bold text-slate-900 leading-snug">
+                      {strategy.title}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleStrategy(strategy.id);
+                      }}
+                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all ${
+                        isSelected
+                          ? "bg-emerald-600 text-white shadow-sm"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      {isSelected ? "Active" : "Add"}
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-slate-600 line-clamp-2 mb-3">
+                    {strategy.description}
+                  </p>
+
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200/60 font-mono">
+                    <span className="font-bold text-emerald-700">
+                      +{formatCurrency(strategy.projectedCashImprovement)}
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-sans">
+                      {strategy.timeToImplement}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right 1 Col: In-Depth Trade-Off Analysis */}
+        <div>
+          <Card className="h-full">
+            <CardHeader className="pb-3 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <Badge variant="neutral" className="text-[10px] uppercase">
+                  {activeStrategy.category}
+                </Badge>
+                <Badge
+                  variant={
+                    activeStrategy.riskLevel === "low"
+                      ? "success"
+                      : activeStrategy.riskLevel === "medium"
+                      ? "warning"
+                      : "danger"
+                  }
+                  className="text-[10px] uppercase font-bold"
+                >
+                  {activeStrategy.riskLevel} Risk
+                </Badge>
+              </div>
+              <CardTitle className="text-sm font-bold mt-2">
+                {activeStrategy.title}
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="pt-4 space-y-4 text-xs">
+              <p className="text-slate-600 leading-relaxed">
+                {activeStrategy.description}
+              </p>
+
+              <div>
+                <h5 className="font-bold text-slate-800 text-[11px] uppercase tracking-wider mb-1.5 text-emerald-700">
+                  Strategic Advantages:
+                </h5>
+                <ul className="space-y-1 text-slate-600">
+                  {activeStrategy.pros.map((pro, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <span className="text-emerald-500 font-bold">&#x2713;</span>
+                      <span>{pro}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h5 className="font-bold text-slate-800 text-[11px] uppercase tracking-wider mb-1.5 text-amber-700">
+                  Operational Trade-Offs:
+                </h5>
+                <ul className="space-y-1 text-slate-600">
+                  {activeStrategy.cons.map((con, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <span className="text-amber-500 font-bold">&bull;</span>
+                      <span>{con}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-slate-500">Execution Velocity:</span>
+                <span className="font-bold text-slate-800">{activeStrategy.timeToImplement}</span>
+              </div>
+
+              <Button
+                variant={selectedStrategies.includes(activeStrategy.id) ? "outline" : "primary"}
+                size="sm"
+                onClick={() => toggleStrategy(activeStrategy.id)}
+                className="w-full text-xs"
               >
-                <div className="p-5">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-bold text-slate-900">{option.title}</span>
-                        {option.recommended && (
-                          <Badge variant="primary" size="sm">
-                            ★ Recommended
-                          </Badge>
-                        )}
-                        <Badge
-                          variant={
-                            option.riskLevel === "low"
-                              ? "success"
-                              : option.riskLevel === "medium"
-                              ? "warning"
-                              : "danger"
-                          }
-                          size="sm"
-                        >
-                          {option.riskLevel.toUpperCase()} RISK
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-1">{option.description}</p>
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <span className="text-base font-bold text-emerald-600 block">
-                        +{formatCurrency(option.projectedCashImprovement)}
-                      </span>
-                      <span className="text-[10px] text-slate-400">Liquidity Boost</span>
-                    </div>
-                  </div>
-
-                  {/* Pros & Cons */}
-                  <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-100 text-[11px]">
-                    <div className="space-y-1">
-                      <span className="font-bold text-emerald-700 block">Advantages:</span>
-                      <ul className="space-y-0.5 text-slate-600 list-disc list-inside">
-                        {option.pros.map((pro, i) => (
-                          <li key={i}>{pro}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="font-bold text-rose-700 block">Trade-Offs:</span>
-                      <ul className="space-y-0.5 text-slate-600 list-disc list-inside">
-                        {option.cons.map((con, i) => (
-                          <li key={i}>{con}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-500">
-                    Lead time: <strong>{option.timeToImplement}</strong>
-                  </span>
-                  <Button
-                    size="sm"
-                    variant={isApplied ? "primary" : "outline"}
-                    className={
-                      isApplied
-                        ? "bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8"
-                        : "text-xs h-8"
-                    }
-                    onClick={() => toggleDecision(option.id)}
-                  >
-                    {isApplied ? "✓ Included in Plan" : "+ Add to Comparison"}
-                  </Button>
-                </div>
-              </Card>
-            );
-          })}
+                {selectedStrategies.includes(activeStrategy.id)
+                  ? "Remove Strategy from Simulation"
+                  : "Apply Strategy to Forecast"}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
