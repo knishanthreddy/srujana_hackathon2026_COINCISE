@@ -821,3 +821,28 @@ export function getLiveForecast(
     minimumReserve,
   });
 }
+
+/**
+ * Resets local storage keys back to default baseline demo datasets.
+ */
+export function resetAllDataToDefaults(): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem(STORAGE_KEY_RECORDS);
+    window.localStorage.removeItem(STORAGE_KEY_RECEIVABLES);
+    window.localStorage.removeItem(STORAGE_KEY_PAYABLES);
+    window.localStorage.removeItem("coincise_disputes_v1");
+
+    memoryRecords = null;
+    memoryReceivables = null;
+    memoryPayables = null;
+
+    window.dispatchEvent(new CustomEvent(EVENT_RECORDS_CHANGED));
+    window.dispatchEvent(new CustomEvent(EVENT_RECEIVABLES_CHANGED));
+    window.dispatchEvent(new CustomEvent(EVENT_PAYABLES_CHANGED));
+    window.dispatchEvent(new CustomEvent("coincise_disputes_changed"));
+  } catch {
+    // Ignore storage clear errors
+  }
+}

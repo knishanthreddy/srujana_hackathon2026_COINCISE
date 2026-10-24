@@ -16,6 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { resetAllDataToDefaults } from "@/lib/data-service";
 import { DEMO_SUMMARY } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ export default function SettingsPage() {
 
   const handleResetDemoData = () => {
     if (confirm("Reset demo data back to default sandbox state?")) {
+      resetAllDataToDefaults();
       setResetNotice(true);
       setTimeout(() => setResetNotice(false), 3000);
     }
