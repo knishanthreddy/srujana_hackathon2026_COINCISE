@@ -7,6 +7,13 @@ import {
   PaymentStatus,
   BusinessSummary,
 } from "./types";
+import {
+  extractForecastItemsFromData,
+  applyScenarioModifiers,
+  generateCashForecast,
+  ScenarioModifiers,
+  ForecastSummary,
+} from "./forecast-engine";
 import { DEMO_RECORDS, DEMO_RECEIVABLES, DEMO_PAYABLES, DEMO_SUMMARY } from "./demo-data";
 import { financialRecordSchema, FinancialRecordFormData } from "./validations/record";
 import {
@@ -782,4 +789,35 @@ export function getUnifiedDashboardMetrics() {
     upcomingExpenses30d: payTotals.totalBalanceDue,
     projectedCash30d: availableCash + recTotals.totalBalanceDue - payTotals.totalBalanceDue,
   };
+}
+
+/**
+ * Computes live, reactive cash-flow forecast derived directly from active records,
+ * receivables, payables, and liquid available cash.
+ */
+export function getLiveForecast(
+  horizon: 7 | 30 | 60 | 90 = 30,
+  minimumReserve: number = 250000,
+  modifiers?: ScenarioModifiers,
+  customReferenceDate?: Date
+): ForecastSummary {
+  const records = getFinancialRecords();
+  const receivables = getReceivables();
+  const payables = getPayables();
+  const metrics = getUnifiedDashboardMetrics();
+
+  const refDate = customReferenceDate || new Date("2026-10-24T00:00:00Z");
+  let items = extractForecastItemsFromData(records, receivables, payables, refDate);
+
+  if (modifiers) {
+    items = applyScenarioModifiers(items, modifiers, refDate);
+  }
+
+  return generateCashForecast({
+    openingCash: metrics.availableCash,
+    items,
+    horizonDays: horizon,
+    referenceDate: refDate,
+    minimumReserve,
+  });
 }
