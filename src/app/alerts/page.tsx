@@ -89,21 +89,21 @@ export default function SmartAlertsPage() {
   return (
     <div className="space-y-6">
       {/* Alert Center Top Bar */}
-      <div className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-5 sm:p-6 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0">
-            <Bell className="w-6 h-6 text-rose-600" />
+          <div className="w-12 h-12 rounded-2xl bg-[#FCE4D8] border border-[#F15A35]/30 flex items-center justify-center shrink-0">
+            <Bell className="w-6 h-6 text-[#F15A35]" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-extrabold text-[#242321] tracking-tight flex items-center gap-2">
               Automated Financial Risk Triggers
               {unreadCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white font-mono">
+                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#F15A35] text-white font-mono">
                   {unreadCount} Active
                 </span>
               )}
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#7A7369] mt-0.5">
               Generated deterministically from active cash forecasts, invoice aging, and vendor payment schedules.
             </p>
           </div>
@@ -112,12 +112,12 @@ export default function SmartAlertsPage() {
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
             <Button variant="outline" size="sm" onClick={markAllRead}>
-              <CheckCircle2 className="w-4 h-4 mr-1.5 text-slate-500" />
+              <CheckCircle2 className="w-4 h-4 mr-1.5 text-[#7A7369]" />
               Mark All as Read
             </Button>
           )}
           <Link href="/forecast">
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button variant="primary" size="sm">
               <Compass className="w-4 h-4 mr-1.5" />
               Inspect Forecast
             </Button>
@@ -126,43 +126,43 @@ export default function SmartAlertsPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-[#E8E1D5] pb-3">
         <button
           onClick={() => setSeverityFilter("all")}
-          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
             severityFilter === "all"
-              ? "bg-slate-900 text-white"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              ? "bg-[#F15A35] text-white shadow-xs"
+              : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
           }`}
         >
           All Alerts ({alerts.length})
         </button>
         <button
           onClick={() => setSeverityFilter("critical")}
-          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
             severityFilter === "critical"
-              ? "bg-rose-600 text-white"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              ? "bg-[#F15A35] text-white shadow-xs"
+              : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
           }`}
         >
           Critical ({criticalCount})
         </button>
         <button
           onClick={() => setSeverityFilter("warning")}
-          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
             severityFilter === "warning"
-              ? "bg-amber-500 text-white"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              ? "bg-[#F15A35] text-white shadow-xs"
+              : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
           }`}
         >
           Warnings ({warningCount})
         </button>
         <button
           onClick={() => setSeverityFilter("info")}
-          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
             severityFilter === "info"
-              ? "bg-blue-600 text-white"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              ? "bg-[#138C83] text-white shadow-xs"
+              : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
           }`}
         >
           Informational
@@ -172,10 +172,10 @@ export default function SmartAlertsPage() {
       {/* Alerts Stream */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
-            <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-2" />
-            <h4 className="text-base font-bold text-slate-800">No active alerts in this view</h4>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+          <div className="p-8 text-center bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5]">
+            <CheckCircle2 className="w-12 h-12 text-[#138C83] mx-auto mb-2" />
+            <h4 className="text-base font-bold text-[#242321]">No active alerts in this view</h4>
+            <p className="text-xs text-[#7A7369] mt-1 max-w-sm mx-auto">
               Your receivables, payables, and projected liquidity buffer are currently within safe thresholds.
             </p>
           </div>
@@ -183,25 +183,25 @@ export default function SmartAlertsPage() {
           filtered.map((alert) => (
             <div
               key={alert.id}
-              className={`p-4 rounded-xl border transition-all ${
+              className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all ${
                 alert.isRead
-                  ? "bg-slate-50/70 border-slate-200 opacity-75"
+                  ? "bg-white border-[#E8E1D5] opacity-75"
                   : alert.severity === "critical"
-                  ? "bg-rose-50/70 border-rose-200/90 shadow-sm"
+                  ? "bg-[#FCE4D8]/50 border-[#F15A35]/40 shadow-xs"
                   : alert.severity === "warning"
-                  ? "bg-amber-50/70 border-amber-200/90 shadow-sm"
-                  : "bg-blue-50/60 border-blue-200/80 shadow-sm"
+                  ? "bg-[#FCE4D8]/30 border-[#F15A35]/30 shadow-xs"
+                  : "bg-[#DDEFE8]/40 border-[#138C83]/30 shadow-xs"
               }`}
             >
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div
-                    className={`p-2 rounded-lg shrink-0 mt-0.5 ${
+                    className={`p-2.5 rounded-2xl shrink-0 mt-0.5 ${
                       alert.severity === "critical"
-                        ? "bg-rose-100 text-rose-700"
+                        ? "bg-[#FCE4D8] text-[#F15A35]"
                         : alert.severity === "warning"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-blue-100 text-blue-700"
+                        ? "bg-[#FCE4D8] text-[#F15A35]"
+                        : "bg-[#DDEFE8] text-[#138C83]"
                     }`}
                   >
                     {alert.severity === "critical" ? (
@@ -228,25 +228,25 @@ export default function SmartAlertsPage() {
                         {alert.severity}
                       </Badge>
 
-                      <span className="text-[11px] font-semibold text-slate-400 font-mono">
+                      <span className="text-[11px] font-semibold text-[#A69C8D] font-mono">
                         {formatDate(alert.date)}
                       </span>
 
                       {!alert.isRead && (
-                        <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />
+                        <span className="w-2 h-2 rounded-full bg-[#F15A35] inline-block" />
                       )}
                     </div>
 
-                    <h4 className="text-sm font-bold text-slate-900">{alert.title}</h4>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">{alert.message}</p>
+                    <h4 className="text-sm font-extrabold text-[#242321]">{alert.title}</h4>
+                    <p className="text-xs text-[#7A7369] mt-1 leading-relaxed">{alert.message}</p>
 
                     {/* Root Cause & Suggested Action */}
-                    <div className="mt-3 p-3 bg-white/80 rounded-lg border border-slate-200/70 text-xs space-y-1">
-                      <p className="font-semibold text-slate-700 flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                    <div className="mt-3 p-3 bg-white rounded-xl border border-[#E8E1D5] text-xs space-y-1">
+                      <p className="font-bold text-[#242321] flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-[#F15A35]" />
                         <span>Recommended Corrective Strategy:</span>
                       </p>
-                      <p className="text-slate-600">{alert.suggestedAction}</p>
+                      <p className="text-[#7A7369]">{alert.suggestedAction}</p>
                     </div>
                   </div>
                 </div>
@@ -266,7 +266,7 @@ export default function SmartAlertsPage() {
 
                   {alert.actionLink && (
                     <Link href={alert.actionLink}>
-                      <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white text-xs">
+                      <Button size="sm" className="bg-[#242321] hover:bg-[#383632] text-white text-xs font-bold rounded-xl">
                         Resolve
                         <ArrowRight className="w-3.5 h-3.5 ml-1" />
                       </Button>

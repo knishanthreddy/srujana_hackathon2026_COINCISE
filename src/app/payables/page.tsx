@@ -307,72 +307,72 @@ export default function PayablesPage() {
       {/* KPI Cards: Payables & Cash Outflow Risk */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Booked Liabilities */}
-        <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+            <span className="text-[11px] font-bold text-[#7A7369] uppercase tracking-wide">
               Total Invoiced Bills
             </span>
-            <h3 className="text-xl font-bold text-slate-900 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#242321] mt-1">
               {formatCurrency(totals.totalPayables)}
             </h3>
           </div>
-          <p className="text-[11px] text-slate-500 mt-2">
-            Settled to Date: <strong className="text-emerald-700">{formatCurrency(totals.totalPaid)}</strong>
+          <p className="text-[11px] text-[#7A7369] mt-2 pt-2 border-t border-[#E8E1D5]/60">
+            Settled to Date: <strong className="text-[#138C83]">{formatCurrency(totals.totalPaid)}</strong>
           </p>
         </div>
 
         {/* Total Outstanding Payables */}
-        <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wide">
+              <span className="text-[11px] font-bold text-[#7A7369] uppercase tracking-wide">
                 Committed Liabilities
               </span>
-              <div className="w-6 h-6 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center">
-                <ArrowUpRight className="w-3.5 h-3.5 text-rose-600" />
+              <div className="w-7 h-7 rounded-xl bg-[#FCE4D8] text-[#F15A35] flex items-center justify-center">
+                <ArrowUpRight className="w-4 h-4 text-[#F15A35]" />
               </div>
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#242321] mt-1">
               {formatCurrency(totals.totalBalanceDue)}
             </h3>
           </div>
-          <p className="text-[11px] text-slate-500 mt-2">Unsettled supplier dues</p>
+          <p className="text-[11px] text-[#7A7369] mt-2 pt-2 border-t border-[#E8E1D5]/60">Unsettled supplier dues</p>
         </div>
 
         {/* Overdue / Escalated Payables */}
-        <div className="p-4 bg-white rounded-xl border border-rose-200/90 bg-rose-50/20 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-rose-900 uppercase tracking-wide">
+              <span className="text-[11px] font-bold text-[#F15A35] uppercase tracking-wide">
                 Past Due Date
               </span>
               <Badge variant="danger" size="sm">
                 {totals.overdueCount} Vendor Bills
               </Badge>
             </div>
-            <h3 className="text-xl font-bold text-rose-600 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#F15A35] mt-1">
               {formatCurrency(totals.overdueBalance)}
             </h3>
           </div>
-          <p className="text-[11px] text-rose-800 mt-2">Subject to late surcharges & dispute</p>
+          <p className="text-[11px] text-[#A69C8D] mt-2 pt-2 border-t border-[#E8E1D5]/60">Subject to late surcharges & dispute</p>
         </div>
 
         {/* Upcoming Scheduled Dues */}
-        <div className="p-4 bg-white rounded-xl border border-amber-200/90 bg-amber-50/20 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wide">
+              <span className="text-[11px] font-bold text-[#7A7369] uppercase tracking-wide">
                 Due Within Window
               </span>
               <Badge variant="warning" size="sm">
                 Pacing Required
               </Badge>
             </div>
-            <h3 className="text-xl font-bold text-amber-700 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#242321] mt-1">
               {formatCurrency(totals.pendingBalance)}
             </h3>
           </div>
-          <p className="text-[11px] text-amber-800 mt-2">Active supplier grace periods</p>
+          <p className="text-[11px] text-[#A69C8D] mt-2 pt-2 border-t border-[#E8E1D5]/60">Active supplier grace periods</p>
         </div>
       </div>
 
@@ -404,28 +404,28 @@ export default function PayablesPage() {
         </CardHeader>
 
         {/* Filter Controls */}
-        <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="px-5 py-3.5 border-b border-[#E8E1D5] bg-[#F7F3EA]/50 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-3 text-[#A69C8D]" />
             <input
               type="text"
               placeholder="Search vendor, bill #, category..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-white rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-white rounded-xl border border-[#E8E1D5] text-[#242321] placeholder:text-[#A69C8D] focus:outline-none focus:ring-2 focus:ring-[#F15A35]"
             />
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
-            <span className="text-xs text-slate-500 mr-1 hidden sm:inline">Status:</span>
+            <span className="text-xs text-[#7A7369] mr-1 hidden sm:inline font-bold">Status:</span>
             {["all", "pending", "overdue", "partially_paid", "paid"].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-lg capitalize transition-all whitespace-nowrap ${
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl capitalize transition-all whitespace-nowrap ${
                   statusFilter === status
-                    ? "bg-slate-900 text-white"
-                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                    ? "bg-[#F15A35] text-white shadow-xs"
+                    : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
                 }`}
               >
                 {status.replace("_", " ")}

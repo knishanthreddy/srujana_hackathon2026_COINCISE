@@ -346,20 +346,20 @@ export default function RecordsPage() {
       )}
 
       {/* Top Banner: Accounting Integrity & Strict Realized Segregation */}
-      <div className="bg-slate-900 rounded-2xl p-5 text-white border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-[#242321] rounded-2xl sm:rounded-3xl p-5 sm:p-6 text-white border border-[#383632] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-md">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#FCE4D8] text-[#F15A35] px-2.5 py-0.5 rounded-full border border-[#F15A35]/30">
               ACCOUNTING ENGINE
             </span>
-            <span className="text-xs text-slate-300">
+            <span className="text-xs text-[#A69C8D]">
               Strict Cash vs. Expected Segregation
             </span>
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-white">
+          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
             Financial Records & Ledger Management
           </h2>
-          <p className="text-xs text-slate-300 mt-0.5 max-w-2xl leading-relaxed">
+          <p className="text-xs text-[#A69C8D] mt-1 max-w-2xl leading-relaxed">
             Record, audit, and categorize actual bank receipts and disbursements. Uncollected invoices remain tracked under expected inflows and are <strong>never</strong> counted as liquid cash.
           </p>
         </div>
@@ -369,9 +369,9 @@ export default function RecordsPage() {
             variant="outline"
             size="sm"
             onClick={handleResetData}
-            className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800"
+            className="border-[#383632] text-white hover:text-white hover:bg-white/10"
           >
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+            <RefreshCw className="w-3.5 h-3.5 mr-1.5 text-[#F15A35]" />
             Reset Ledger
           </Button>
           <Button variant="primary" size="sm" onClick={openAddModal}>
@@ -384,100 +384,100 @@ export default function RecordsPage() {
       {/* 5 Core Financial Total Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Cleared Real Cash Inflow */}
-        <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+              <span className="text-[11px] font-bold text-[#7A7369] uppercase tracking-wide">
                 Cleared Inflows
               </span>
-              <div className="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <ArrowDownLeft className="w-3.5 h-3.5" />
+              <div className="w-7 h-7 rounded-xl bg-[#DDEFE8] text-[#138C83] flex items-center justify-center">
+                <ArrowDownLeft className="w-4 h-4" />
               </div>
             </div>
-            <h3 className="text-xl font-bold text-emerald-600 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#138C83] mt-1">
               +{formatCurrency(totals.clearedInflows)}
             </h3>
           </div>
-          <p className="text-[10px] text-slate-500 mt-2">Realized bank credits</p>
+          <p className="text-[11px] text-[#A69C8D] mt-2 pt-2 border-t border-[#E8E1D5]/60">Realized bank credits</p>
         </div>
 
         {/* Cleared Real Cash Outflow */}
-        <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+              <span className="text-[11px] font-bold text-[#7A7369] uppercase tracking-wide">
                 Cleared Outflows
               </span>
-              <div className="w-6 h-6 rounded-md bg-rose-50 text-rose-600 flex items-center justify-center">
-                <ArrowUpRight className="w-3.5 h-3.5" />
+              <div className="w-7 h-7 rounded-xl bg-[#FCE4D8] text-[#F15A35] flex items-center justify-center">
+                <ArrowUpRight className="w-4 h-4" />
               </div>
             </div>
-            <h3 className="text-xl font-bold text-rose-600 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#F15A35] mt-1">
               -{formatCurrency(totals.clearedOutflows)}
             </h3>
           </div>
-          <p className="text-[10px] text-slate-500 mt-2">Realized bank debits</p>
+          <p className="text-[11px] text-[#A69C8D] mt-2 pt-2 border-t border-[#E8E1D5]/60">Realized bank debits</p>
         </div>
 
         {/* Net Realized Cash */}
-        <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+              <span className="text-[11px] font-bold text-[#7A7369] uppercase tracking-wide">
                 Net Operating Cash
               </span>
-              <div className="w-6 h-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
-                <ReceiptText className="w-3.5 h-3.5" />
+              <div className="w-7 h-7 rounded-xl bg-[#F7F3EA] text-[#F15A35] flex items-center justify-center">
+                <ReceiptText className="w-4 h-4" />
               </div>
             </div>
             <h3
-              className={`text-xl font-bold mt-1 ${
-                totals.netClearedCash >= 0 ? "text-blue-600" : "text-amber-600"
+              className={`text-xl sm:text-2xl font-extrabold mt-1 ${
+                totals.netClearedCash >= 0 ? "text-[#138C83]" : "text-[#F15A35]"
               }`}
             >
               {totals.netClearedCash >= 0 ? "+" : ""}
               {formatCurrency(totals.netClearedCash)}
             </h3>
           </div>
-          <p className="text-[10px] text-slate-500 mt-2">Current net liquidity</p>
+          <p className="text-[11px] text-[#A69C8D] mt-2 pt-2 border-t border-[#E8E1D5]/60">Current net liquidity</p>
         </div>
 
         {/* Expected Inflows (Pending Receivables) */}
-        <div className="p-4 bg-white rounded-xl border border-amber-200/80 bg-amber-50/20 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wide">
+              <span className="text-[11px] font-bold text-[#F15A35] uppercase tracking-wide">
                 Expected Inflows
               </span>
               <Badge variant="warning" size="sm">
                 Unrealized
               </Badge>
             </div>
-            <h3 className="text-xl font-bold text-amber-700 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#F15A35] mt-1">
               {formatCurrency(totals.expectedInflows)}
             </h3>
           </div>
-          <p className="text-[10px] text-amber-800 font-medium mt-2">
+          <p className="text-[11px] text-[#F15A35] font-bold mt-2 pt-2 border-t border-[#E8E1D5]/60">
             ⚠️ Not counted in available cash
           </p>
         </div>
 
         {/* Expected Outflows (Pending Payables) */}
-        <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+              <span className="text-[11px] font-bold text-[#7A7369] uppercase tracking-wide">
                 Expected Outflows
               </span>
               <Badge variant="neutral" size="sm">
                 Pending
               </Badge>
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#242321] mt-1">
               {formatCurrency(totals.expectedOutflows)}
             </h3>
           </div>
-          <p className="text-[10px] text-slate-500 mt-2">Upcoming obligations</p>
+          <p className="text-[11px] text-[#A69C8D] mt-2 pt-2 border-t border-[#E8E1D5]/60">Upcoming obligations</p>
         </div>
       </div>
 

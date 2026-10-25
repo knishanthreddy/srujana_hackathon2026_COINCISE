@@ -218,31 +218,31 @@ export default function DecisionCentrePage() {
   return (
     <div className="space-y-6">
       {/* Strategic Header Banner */}
-      <div className="p-6 bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 rounded-2xl text-white border border-blue-800/40 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-5">
+      <div className="p-5 sm:p-6 bg-[#242321] rounded-2xl sm:rounded-3xl text-white border border-[#383632] shadow-md flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/30 text-blue-300 border border-blue-400/30">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#FCE4D8] text-[#F15A35] border border-[#F15A35]/30">
               EXECUTIVE DECISION CENTRE
             </span>
-            <span className="text-xs text-blue-200">
+            <span className="text-xs text-[#A69C8D]">
               Hypothetical Corrective Action & Trade-Off Modeling
             </span>
           </div>
-          <h2 className="text-2xl font-extrabold tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
             Liquidity Rescue & Working Capital Optimizer
           </h2>
-          <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs text-[#A69C8D] mt-1 max-w-2xl leading-relaxed">
             Select and compare corrective strategies to resolve projected cash reserve breaches and cash shortages.
             Simulations evaluate trade-offs without executing actual payments or altering your ledger.
           </p>
         </div>
 
-        <div className="p-4 bg-white/10 rounded-xl border border-white/15 text-right shrink-0">
-          <p className="text-[10px] text-slate-300 uppercase font-semibold">Simulated Net Impact</p>
-          <p className={`text-xl font-bold font-mono ${totalBoost >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+        <div className="p-4 bg-[#1A1918] rounded-2xl border border-[#383632] text-right shrink-0">
+          <p className="text-[10px] text-[#A69C8D] uppercase font-bold">Simulated Net Impact</p>
+          <p className={`text-xl font-extrabold font-mono ${totalBoost >= 0 ? "text-[#138C83]" : "text-[#F15A35]"}`}>
             {totalBoost >= 0 ? "+" : ""}{formatCurrency(totalBoost)}
           </p>
-          <p className="text-[11px] text-slate-300 mt-0.5">
+          <p className="text-[11px] text-[#A69C8D] mt-0.5">
             {selectedStrategies.length} Corrective Action(s) Active
           </p>
         </div>

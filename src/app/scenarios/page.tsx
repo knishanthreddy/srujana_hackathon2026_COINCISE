@@ -170,35 +170,35 @@ export default function ScenarioLabPage() {
   return (
     <div className="space-y-6">
       {/* Simulation Engine Header */}
-      <div className="bg-slate-900 rounded-2xl p-6 text-white border border-slate-800 shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+      <div className="bg-[#242321] rounded-2xl sm:rounded-3xl p-5 sm:p-6 text-white border border-[#383632] shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-5">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-500/30">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[#FCE4D8] text-[#F15A35] px-2.5 py-0.5 rounded-full border border-[#F15A35]/30">
               HYPOTHETICAL SCENARIO LAB
             </span>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-[#A69C8D]">
               Runs strictly on top of Forecasting Engine
             </span>
           </div>
-          <h2 className="text-2xl font-extrabold tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
             Stress Test & Financial Risk Simulation
           </h2>
-          <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs text-[#A69C8D] mt-1 max-w-2xl leading-relaxed">
             Simulate payment delays, sales shifts, emergency capital outlays, and supplier payment accelerations.
             All scenarios are strictly hypothetical and never alter your actual financial ledger.
           </p>
         </div>
 
         {/* Horizon Selector */}
-        <div className="flex items-center gap-1 bg-slate-800 p-1.5 rounded-xl border border-slate-700 shrink-0">
+        <div className="flex items-center gap-1 bg-[#1A1918] p-1.5 rounded-2xl border border-[#383632] shrink-0">
           {([7, 30, 60, 90] as const).map((days) => (
             <button
               key={days}
               onClick={() => setHorizon(days)}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
                 horizon === days
-                  ? "bg-purple-600 text-white shadow"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-[#F15A35] text-white shadow-xs"
+                  : "text-[#A69C8D] hover:text-white"
               }`}
             >
               {days}D
@@ -208,14 +208,14 @@ export default function ScenarioLabPage() {
       </div>
 
       {/* Strict Hypothetical Disclaimer Notice */}
-      <div className="p-3.5 bg-purple-50 border border-purple-200 rounded-xl flex items-center justify-between gap-3 text-xs text-purple-900 shadow-sm">
+      <div className="p-4 bg-white border border-[#E8E1D5] rounded-2xl sm:rounded-3xl flex items-center justify-between gap-3 text-xs text-[#242321] shadow-xs">
         <div className="flex items-center gap-2.5">
-          <Info className="w-4 h-4 text-purple-600 shrink-0" />
+          <Info className="w-4 h-4 text-[#F15A35] shrink-0" />
           <span>
-            <strong className="font-semibold">Safe Sandbox Mode:</strong> Adjusting simulation parameters below models what-if outcomes. Your actual receivables, supplier bills, and cash ledger records remain 100% untouched.
+            <strong className="font-bold">Safe Sandbox Mode:</strong> Adjusting simulation parameters below models what-if outcomes. Your actual receivables, supplier bills, and cash ledger records remain 100% untouched.
           </span>
         </div>
-        <Badge variant="neutral" className="bg-purple-100 text-purple-800 border-purple-300 shrink-0">
+        <Badge variant="neutral" className="bg-[#F7F3EA] text-[#7A7369] border-[#E8E1D5] shrink-0">
           Hypothetical Only
         </Badge>
       </div>

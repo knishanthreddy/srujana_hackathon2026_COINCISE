@@ -281,72 +281,72 @@ export default function ReceivablesPage() {
       {/* KPI Cards: Receivables & Collection Health */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Book */}
-        <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+            <span className="text-[11px] font-bold text-[#7A7369] uppercase tracking-wide">
               Total Invoiced Book
             </span>
-            <h3 className="text-xl font-bold text-slate-900 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#242321] mt-1">
               {formatCurrency(totals.totalReceivables)}
             </h3>
           </div>
-          <p className="text-[11px] text-slate-500 mt-2">
-            Collected: <strong className="text-emerald-700">{formatCurrency(totals.totalPaid)}</strong>
+          <p className="text-[11px] text-[#7A7369] mt-2 pt-2 border-t border-[#E8E1D5]/60">
+            Collected: <strong className="text-[#138C83]">{formatCurrency(totals.totalPaid)}</strong>
           </p>
         </div>
 
         {/* Total Outstanding Balance */}
-        <div className="p-4 bg-white rounded-xl border border-blue-200/90 bg-blue-50/20 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wide">
+              <span className="text-[11px] font-bold text-[#7A7369] uppercase tracking-wide">
                 Total Outstanding
               </span>
-              <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-700 flex items-center justify-center">
-                <ArrowDownLeft className="w-3.5 h-3.5" />
+              <div className="w-7 h-7 rounded-xl bg-[#DDEFE8] text-[#138C83] flex items-center justify-center">
+                <ArrowDownLeft className="w-4 h-4" />
               </div>
             </div>
-            <h3 className="text-xl font-bold text-blue-700 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#242321] mt-1">
               {formatCurrency(totals.totalBalanceDue)}
             </h3>
           </div>
-          <p className="text-[11px] text-blue-900 mt-2 font-medium">Expected incoming liquidity</p>
+          <p className="text-[11px] text-[#7A7369] mt-2 pt-2 border-t border-[#E8E1D5]/60 font-medium">Expected incoming liquidity</p>
         </div>
 
         {/* Overdue at Risk */}
-        <div className="p-4 bg-white rounded-xl border border-rose-200/90 bg-rose-50/20 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-rose-900 uppercase tracking-wide">
+              <span className="text-[11px] font-bold text-[#F15A35] uppercase tracking-wide">
                 Overdue at Risk
               </span>
               <Badge variant="danger" size="sm">
                 {totals.overdueCount} Invoices
               </Badge>
             </div>
-            <h3 className="text-xl font-bold text-rose-600 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#F15A35] mt-1">
               {formatCurrency(totals.overdueBalance)}
             </h3>
           </div>
-          <p className="text-[11px] text-rose-800 mt-2">Past credit payment window</p>
+          <p className="text-[11px] text-[#A69C8D] mt-2 pt-2 border-t border-[#E8E1D5]/60">Past credit payment window</p>
         </div>
 
         {/* Current & Upcoming */}
-        <div className="p-4 bg-white rounded-xl border border-emerald-200/90 bg-emerald-50/20 shadow-sm flex flex-col justify-between">
+        <div className="p-5 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-emerald-900 uppercase tracking-wide">
+              <span className="text-[11px] font-bold text-[#138C83] uppercase tracking-wide">
                 Within Terms
               </span>
               <Badge variant="success" size="sm">
                 Safe
               </Badge>
             </div>
-            <h3 className="text-xl font-bold text-emerald-700 mt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#138C83] mt-1">
               {formatCurrency(totals.currentBalance)}
             </h3>
           </div>
-          <p className="text-[11px] text-emerald-800 mt-2">Dues within 30-day window</p>
+          <p className="text-[11px] text-[#A69C8D] mt-2 pt-2 border-t border-[#E8E1D5]/60">Dues within 30-day window</p>
         </div>
       </div>
 
@@ -378,28 +378,28 @@ export default function ReceivablesPage() {
         </CardHeader>
 
         {/* Search & Filter Bar */}
-        <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="px-5 py-3.5 border-b border-[#E8E1D5] bg-[#F7F3EA]/50 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-3 text-[#A69C8D]" />
             <input
               type="text"
               placeholder="Search customer, invoice #, memo..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-white rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-white rounded-xl border border-[#E8E1D5] text-[#242321] placeholder:text-[#A69C8D] focus:outline-none focus:ring-2 focus:ring-[#F15A35]"
             />
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
-            <span className="text-xs text-slate-500 mr-1 hidden sm:inline">Status:</span>
+            <span className="text-xs text-[#7A7369] mr-1 hidden sm:inline font-bold">Status:</span>
             {["all", "overdue", "partially_paid", "pending", "paid"].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-lg capitalize transition-all whitespace-nowrap ${
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl capitalize transition-all whitespace-nowrap ${
                   statusFilter === status
-                    ? "bg-slate-900 text-white"
-                    : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                    ? "bg-[#F15A35] text-white shadow-xs"
+                    : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
                 }`}
               >
                 {status.replace("_", " ")}

@@ -65,7 +65,7 @@ type ReportTab =
 
 type DateFilterOption = "all" | "last_30" | "last_60" | "last_90";
 
-const PIE_COLORS = ["#2563eb", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
+const PIE_COLORS = ["#138C83", "#F15A35", "#E89B35", "#242321", "#7A7369", "#DDEFE8"];
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<ReportTab>("income_expense");
@@ -345,25 +345,25 @@ export default function ReportsPage() {
       )}
 
       {/* Top Header & Date Filter Bar */}
-      <div className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-5 sm:p-6 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-blue-600" />
+          <h2 className="text-xl sm:text-2xl font-extrabold text-[#242321] tracking-tight flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 text-[#F15A35]" />
             <span>Financial Reports & Executive Analytics</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#7A7369] mt-0.5">
             Comprehensive audit-ready financial statements, forecast comparisons, ageing distributions, and dispute summaries.
           </p>
         </div>
 
         {/* Date Scope Filter */}
-        <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
-          <Calendar className="w-4 h-4 text-slate-500 ml-1" />
-          <span className="text-xs font-semibold text-slate-600">Period:</span>
+        <div className="flex items-center gap-2 bg-[#F7F3EA] p-2 rounded-xl border border-[#E8E1D5]">
+          <Calendar className="w-4 h-4 text-[#7A7369] ml-1" />
+          <span className="text-xs font-bold text-[#7A7369]">Period:</span>
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value as DateFilterOption)}
-            className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+            className="bg-transparent text-xs font-bold text-[#242321] focus:outline-none cursor-pointer"
           >
             <option value="all">All Available Records</option>
             <option value="last_30">Last 30 Days</option>
@@ -374,63 +374,63 @@ export default function ReportsPage() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-[#E8E1D5] pb-3">
         <button
           onClick={() => setActiveTab("income_expense")}
-          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
             activeTab === "income_expense"
-              ? "bg-blue-600 text-white shadow-sm"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              ? "bg-[#F15A35] text-white shadow-xs"
+              : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
           }`}
         >
           Income & Expenses
         </button>
         <button
           onClick={() => setActiveTab("forecast_actual")}
-          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
             activeTab === "forecast_actual"
-              ? "bg-blue-600 text-white shadow-sm"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              ? "bg-[#F15A35] text-white shadow-xs"
+              : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
           }`}
         >
           Forecast vs Actuals
         </button>
         <button
           onClick={() => setActiveTab("receivables_ageing")}
-          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
             activeTab === "receivables_ageing"
-              ? "bg-blue-600 text-white shadow-sm"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              ? "bg-[#F15A35] text-white shadow-xs"
+              : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
           }`}
         >
           Receivables Ageing
         </button>
         <button
           onClick={() => setActiveTab("payables_ageing")}
-          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
             activeTab === "payables_ageing"
-              ? "bg-blue-600 text-white shadow-sm"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              ? "bg-[#F15A35] text-white shadow-xs"
+              : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
           }`}
         >
           Payables Schedule
         </button>
         <button
           onClick={() => setActiveTab("scenario_analysis")}
-          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
             activeTab === "scenario_analysis"
-              ? "bg-blue-600 text-white shadow-sm"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              ? "bg-[#F15A35] text-white shadow-xs"
+              : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
           }`}
         >
           Scenario Benchmarks
         </button>
         <button
           onClick={() => setActiveTab("disputes_alerts")}
-          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
             activeTab === "disputes_alerts"
-              ? "bg-blue-600 text-white shadow-sm"
-              : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+              ? "bg-[#F15A35] text-white shadow-xs"
+              : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
           }`}
         >
           Disputes & Risk Alerts

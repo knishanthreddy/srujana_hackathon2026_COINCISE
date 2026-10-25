@@ -125,14 +125,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       <div className="space-y-4">
         {/* Supabase Connection State Banner */}
         <div
-          className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
+          className={`p-3 rounded-2xl border text-xs flex items-center justify-between ${
             hasConfig
-              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-              : "bg-blue-50 border-blue-200 text-blue-900"
+              ? "bg-[#DDEFE8] border-[#138C83]/30 text-[#138C83]"
+              : "bg-[#F7F3EA] border-[#E8E1D5] text-[#242321]"
           }`}
         >
           <div className="flex items-center gap-2">
-            <Database className={`w-4 h-4 ${hasConfig ? "text-emerald-600" : "text-blue-600"}`} />
+            <Database className={`w-4 h-4 ${hasConfig ? "text-[#138C83]" : "text-[#F15A35]"}`} />
             <div>
               <p className="font-bold">
                 {hasConfig ? "Supabase PostgreSQL Active" : "Prototype Offline Demo Mode"}
@@ -195,12 +195,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   onClose();
                   router.push("/onboarding");
                 }}
-                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                className="text-[#F15A35] border-[#F15A35]/30 hover:bg-[#FCE4D8]"
               >
-                <Sparkles className="w-3.5 h-3.5 mr-1 text-blue-600" />
+                <Sparkles className="w-3.5 h-3.5 mr-1 text-[#F15A35]" />
                 Launch Setup Wizard
               </Button>
-              <Button size="sm" onClick={onClose}>
+              <Button size="sm" variant="primary" onClick={onClose}>
                 Continue in Demo Mode
               </Button>
             </div>

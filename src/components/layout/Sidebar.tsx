@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  Wallet,
   ReceiptText,
   ArrowDownLeft,
   ArrowUpRight,
@@ -18,7 +19,8 @@ import {
   Sparkles,
   ShieldCheck,
   ChevronRight,
-  AlertTriangle,
+  X,
+  User,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { DEMO_SUMMARY } from "@/lib/demo-data";
@@ -36,25 +38,23 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
-  badgeVariant?: "neutral" | "warning" | "danger" | "info" | "success";
+  badgeVariant?: "neutral" | "warning" | "danger" | "info" | "success" | "primary";
 }
 
-const mainNavItems: NavItem[] = [
+const allNavItems: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Available Cash", href: "/cash", icon: Wallet },
   { name: "Financial Records", href: "/records", icon: ReceiptText },
   { name: "Receivables", href: "/receivables", icon: ArrowDownLeft, badge: "3 Overdue", badgeVariant: "warning" },
-  { name: "Payables", href: "/payables", icon: ArrowUpRight, badge: "₹7.8L", badgeVariant: "neutral" },
+  { name: "Payables", href: "/payables", icon: ArrowUpRight, badge: "Upcoming", badgeVariant: "neutral" },
   { name: "Cash-Flow Forecast", href: "/forecast", icon: TrendingUp },
   { name: "Scenario Lab", href: "/scenarios", icon: FlaskConical },
-  { name: "Smart Alerts", href: "/alerts", icon: Bell, badge: "4", badgeVariant: "danger" },
+  { name: "Smart Alerts", href: "/alerts", icon: Bell, badge: "Active", badgeVariant: "danger" },
   { name: "Decision Centre", href: "/decision-centre", icon: Compass },
+  { name: "Credro™ Trust Score", href: "/credro", icon: ShieldCheck, badge: "82", badgeVariant: "primary" },
   { name: "FairResolve", href: "/fairresolve", icon: Scale, badge: "ODR", badgeVariant: "info" },
   { name: "Reports & Analytics", href: "/reports", icon: BarChart3 },
-];
-
-const secondaryNavItems: NavItem[] = [
-  { name: "Setup Wizard", href: "/onboarding", icon: Sparkles, badge: "Setup", badgeVariant: "info" },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Business Settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar({
@@ -68,6 +68,7 @@ export function Sidebar({
   const [availableCash, setAvailableCash] = useState(DEMO_SUMMARY.availableCash);
   const [minimumReserve, setMinimumReserve] = useState(DEMO_SUMMARY.minimumReserve);
   const [isDeficit, setIsDeficit] = useState(false);
+  const [businessName, setBusinessName] = useState(DEMO_SUMMARY.businessName);
 
   useEffect(() => {
     const syncCash = () => {
@@ -77,6 +78,7 @@ export function Sidebar({
       const minReserve = onboarding.openingFinances.minimumReserve || DEMO_SUMMARY.minimumReserve;
       setMinimumReserve(minReserve);
       setIsDeficit(metrics.availableCash < minReserve);
+      setBusinessName(onboarding.profile.tradeName || onboarding.profile.mcaLegalName || DEMO_SUMMARY.businessName);
     };
 
     syncCash();
@@ -95,170 +97,158 @@ export function Sidebar({
     };
   }, []);
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <>
-      {/* Mobile backdrop */}
+      {/* Backdrop for Drawer (Mobile & Desktop) */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-[#242321]/40 backdrop-blur-xs z-50 transition-opacity animate-in fade-in duration-200"
           onClick={onClose}
+          aria-hidden="true"
         />
       )}
 
+      {/* Hamburger Navigation Drawer matching Image 2 */}
       <aside
         className={cn(
-          "fixed top-0 bottom-0 left-0 z-40 w-64 bg-slate-950 text-slate-100 flex flex-col border-r border-slate-800/80 transition-transform duration-200 ease-in-out lg:translate-x-0",
+          "fixed top-0 bottom-0 left-0 z-50 w-72 sm:w-80 bg-[#F7F3EA] text-[#242321] flex flex-col border-r border-[#E8E1D5] transition-transform duration-300 ease-in-out shadow-2xl",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
+        aria-label="Navigation Drawer"
       >
-        {/* Brand Header */}
-        <div className="h-16 px-5 border-b border-slate-800/80 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5 text-white" />
+        {/* Drawer Header */}
+        <div className="h-20 px-5 border-b border-[#E8E1D5] flex items-center justify-between bg-white/70 backdrop-blur-sm">
+          <Link href="/" onClick={onClose} className="flex items-center gap-2.5 group">
+            <div className="w-10 h-10 rounded-2xl bg-[#F15A35] flex items-center justify-center text-white shadow-orange group-hover:scale-105 transition-transform">
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-lg tracking-wider text-white">COINCISE</span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.2 bg-blue-500/20 text-blue-400 rounded border border-blue-500/30">
+                <span className="font-extrabold text-lg tracking-wider text-[#242321]">COINCISE</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 bg-[#FCE4D8] text-[#F15A35] rounded-full border border-[#F15A35]/30">
                   AI
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium">Business Finance Support</p>
+              <p className="text-[10px] text-[#A69C8D] font-medium">Business Finance &amp; Cash Flow</p>
             </div>
           </Link>
+
+          {/* Close button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white border border-[#E8E1D5] text-[#242321] hover:bg-[#F7F3EA] flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+            aria-label="Close navigation drawer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Navigation list */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-          <div>
-            <div className="px-3 mb-2 flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Main Menu
-              </span>
-              <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800/60 px-1.5 py-0.5 rounded font-mono">
-                DEMO MODE
-              </span>
-            </div>
-
-            <nav className="space-y-1">
-              {mainNavItems.map((item) => {
-                const isActive = pathname === item.href;
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={onClose}
-                    className={cn(
-                      "flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all group",
-                      isActive
-                        ? "bg-blue-600 text-white shadow-sm shadow-blue-600/30"
-                        : "text-slate-300 hover:text-white hover:bg-slate-900"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        className={cn(
-                          "w-4 h-4 transition-colors",
-                          isActive ? "text-white" : "text-slate-400 group-hover:text-white"
-                        )}
-                      />
-                      <span>{item.name}</span>
-                    </div>
-
-                    {item.badge && (
-                      <span
-                        className={cn(
-                          "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
-                          isActive
-                            ? "bg-white/20 text-white border-white/20"
-                            : item.badgeVariant === "danger"
-                            ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
-                            : item.badgeVariant === "warning"
-                            ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                            : item.badgeVariant === "info"
-                            ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
-                            : "bg-slate-800 text-slate-400 border-slate-700"
-                        )}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </nav>
+        {/* Business Profile Summary Banner inside Drawer */}
+        <div className="px-5 py-3.5 bg-white/50 border-b border-[#E8E1D5]/60 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-[#DDEFE8] text-[#138C83] flex items-center justify-center font-bold text-xs shrink-0">
+            {businessName.slice(0, 2).toUpperCase()}
           </div>
-
-          <div>
-            <div className="px-3 mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Preferences
-              </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-[#242321] truncate">{businessName}</p>
+            <div className="flex items-center gap-1 text-[10px] text-[#A69C8D]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#138C83]" />
+              <span>Verified MSME Workspace</span>
             </div>
-            <nav className="space-y-1">
-              {secondaryNavItems.map((item) => {
-                const isActive = pathname === item.href;
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={onClose}
-                    className={cn(
-                      "flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all group",
-                      isActive
-                        ? "bg-blue-600 text-white shadow-sm shadow-blue-600/30"
-                        : "text-slate-300 hover:text-white hover:bg-slate-900"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        className={cn(
-                          "w-4 h-4 transition-colors",
-                          isActive ? "text-white" : "text-slate-400 group-hover:text-white"
-                        )}
-                      />
-                      <span>{item.name}</span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </nav>
           </div>
         </div>
 
-        {/* Cash Reserve Pill Footer */}
-        <div className="p-3 border-t border-slate-800/80 bg-slate-900/60">
-          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex flex-col gap-2">
+        {/* Navigation Link List */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          <div className="px-3 mb-2 flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#A69C8D]">
+              All Modules &amp; Tools
+            </span>
+            <span className="text-[9px] bg-[#DDEFE8] text-[#138C83] border border-[#138C83]/30 px-1.5 py-0.2 rounded-full font-bold">
+              13 Pages
+            </span>
+          </div>
+
+          <nav className="space-y-1">
+            {allNavItems.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className={cn(
+                    "flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-medium transition-all group",
+                    isActive
+                      ? "bg-[#FCE4D8] text-[#F15A35] font-bold shadow-2xs"
+                      : "text-[#242321] hover:bg-white hover:text-[#242321]"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      className={cn(
+                        "w-4 h-4 transition-colors",
+                        isActive ? "text-[#F15A35]" : "text-[#A69C8D] group-hover:text-[#242321]"
+                      )}
+                    />
+                    <span>{item.name}</span>
+                  </div>
+
+                  {item.badge && (
+                    <Badge variant={item.badgeVariant || "neutral"} size="sm" className="text-[10px]">
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Drawer Footer: Available Cash Runway Pill */}
+        <div className="p-3.5 border-t border-[#E8E1D5] bg-white">
+          <div className="p-3.5 rounded-2xl bg-[#F7F3EA] border border-[#E8E1D5] flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Available Cash</span>
+              <div className="flex items-center gap-1.5 text-xs text-[#A69C8D] font-medium">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#138C83]" />
+                <span>Live Available Cash</span>
               </div>
-              <span className="text-[10px] text-emerald-400 bg-emerald-950/80 border border-emerald-800/40 px-1 rounded">
-                Live
+              <span className="text-[10px] text-[#138C83] bg-[#DDEFE8] px-1.5 py-0.2 rounded-full font-bold">
+                Runway
               </span>
             </div>
+
             <div className="flex items-baseline justify-between">
               <span
                 className={cn(
-                  "text-base font-bold tracking-tight transition-colors",
-                  isDeficit ? "text-amber-400" : "text-white"
+                  "text-base font-extrabold tracking-tight",
+                  isDeficit ? "text-[#F15A35]" : "text-[#242321]"
                 )}
               >
                 {formatCurrency(availableCash)}
               </span>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-[10px] text-[#A69C8D]">
                 Min: {formatCurrency(minimumReserve)}
               </span>
             </div>
-            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+
+            <div className="w-full bg-[#E8E1D5] h-1.5 rounded-full overflow-hidden">
               <div
                 className={cn(
                   "h-full rounded-full transition-all duration-300",
-                  isDeficit ? "bg-amber-500" : "bg-emerald-500"
+                  isDeficit ? "bg-[#F15A35]" : "bg-[#138C83]"
                 )}
                 style={{
                   width: `${Math.min(

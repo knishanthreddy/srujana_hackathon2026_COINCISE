@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { MobileBottomNav } from "./MobileBottomNav";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { AlertCircle, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
@@ -70,28 +71,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-[#F7F3EA] text-[#242321] flex flex-col">
+      {/* Slide-out Hamburger Navigation Drawer */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
+      <div className="flex-1 flex flex-col min-w-0">
         <Header
           onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
           onOpenNewRecordModal={() => setIsRecordModalOpen(true)}
         />
 
-        <main className="flex-1 p-4 lg:p-8 max-w-7xl mx-auto w-full">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-24 md:pb-10">
           {/* Toast Notification */}
           {toastMessage && (
-            <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between shadow-sm animate-in fade-in duration-200">
+            <div className="mb-6 p-4 rounded-2xl bg-[#DDEFE8] border border-[#138C83]/30 text-[#138C83] flex items-center justify-between shadow-xs animate-in fade-in duration-200">
               <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                <span className="text-sm font-medium">{toastMessage}</span>
+                <CheckCircle2 className="w-5 h-5 text-[#138C83] shrink-0" />
+                <span className="text-sm font-semibold">{toastMessage}</span>
               </div>
               <button
                 onClick={() => setToastMessage(null)}
-                className="text-xs text-emerald-700 font-semibold hover:underline"
+                className="text-xs text-[#138C83] font-bold hover:underline"
               >
                 Dismiss
               </button>
@@ -100,19 +101,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Business Onboarding Incomplete Reminder Banner */}
           {!onboardingDone && (
-            <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-blue-900 to-indigo-950 text-white border border-blue-700/60 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+            <div className="mb-6 p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white border border-[#E8E1D5] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-blue-600/40 text-blue-300 flex items-center justify-center shrink-0">
-                  <Sparkles className="w-5 h-5 text-cyan-300" />
+                <div className="w-10 h-10 rounded-2xl bg-[#FCE4D8] text-[#F15A35] flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 text-[#F15A35]" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-white flex items-center gap-2">
+                  <div className="text-xs font-bold text-[#242321] flex items-center gap-2">
                     <span>Business Setup Incomplete</span>
-                    <span className="text-[10px] bg-blue-500/30 text-blue-200 px-1.5 py-0.5 rounded font-medium">
+                    <span className="text-[10px] bg-[#FCE4D8] text-[#F15A35] font-bold px-2 py-0.5 rounded-full border border-[#F15A35]/30">
                       Action Recommended
                     </span>
                   </div>
-                  <div className="text-[11px] text-blue-200 mt-0.5">
+                  <div className="text-xs text-[#7A7369] mt-0.5">
                     Configure your registered legal entity, CIN verification, opening bank balances, and predictive forecast rules.
                   </div>
                 </div>
@@ -122,7 +123,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Button
                   variant="primary"
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm w-full sm:w-auto"
+                  className="w-full sm:w-auto"
                 >
                   <span>Launch Setup Wizard</span>
                   <ArrowRight className="w-3.5 h-3.5 ml-1" />
@@ -135,22 +136,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
+      {/* Fixed Mobile Bottom Navigation Bar (md:hidden) */}
+      <MobileBottomNav onOpenDrawer={() => setSidebarOpen(true)} />
+
       {/* Quick Record Modal */}
       <Modal
         isOpen={isRecordModalOpen}
         onClose={() => setIsRecordModalOpen(false)}
         title="Add Financial Transaction"
-        description="Record actual cash received or disbursed into the financial books."
+        description="Record actual cash received or disbursed into your local verified books."
       >
         <form onSubmit={handleCreateRecord} className="space-y-4">
-          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-lg">
+          <div className="grid grid-cols-2 gap-2 p-1.5 bg-[#F7F3EA] border border-[#E8E1D5] rounded-2xl">
             <button
               type="button"
               onClick={() => setFormType("income")}
-              className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
+              className={`py-2 text-xs font-bold rounded-xl transition-all ${
                 formType === "income"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-[#138C83] text-white shadow-xs"
+                  : "text-[#7A7369] hover:text-[#242321]"
               }`}
             >
               + Cash Income
@@ -158,10 +162,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => setFormType("expense")}
-              className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
+              className={`py-2 text-xs font-bold rounded-xl transition-all ${
                 formType === "expense"
-                  ? "bg-rose-600 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-[#F15A35] text-white shadow-xs"
+                  : "text-[#7A7369] hover:text-[#242321]"
               }`}
             >
               - Cash Expense
@@ -169,7 +173,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-bold text-[#242321] mb-1.5">
               Amount (₹ INR) *
             </label>
             <input
@@ -178,18 +182,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               required
               value={formAmount}
               onChange={(e) => setFormAmount(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#E8E1D5] bg-white text-[#242321] placeholder:text-[#A69C8D] focus:outline-none focus:ring-2 focus:ring-[#F15A35] focus:border-[#F15A35] transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-bold text-[#242321] mb-1.5">
               Category *
             </label>
             <select
               value={formCategory}
               onChange={(e) => setFormCategory(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#E8E1D5] bg-white text-[#242321] focus:outline-none focus:ring-2 focus:ring-[#F15A35] focus:border-[#F15A35] transition-all"
             >
               {formType === "income" ? (
                 <>
@@ -213,7 +217,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-bold text-[#242321] mb-1.5">
               Description / Memo *
             </label>
             <input
@@ -222,18 +226,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               required
               value={formDesc}
               onChange={(e) => setFormDesc(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#E8E1D5] bg-white text-[#242321] placeholder:text-[#A69C8D] focus:outline-none focus:ring-2 focus:ring-[#F15A35] focus:border-[#F15A35] transition-all"
             />
           </div>
 
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 text-xs text-amber-800">
-            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <span>
+          <div className="p-3 bg-[#FCE4D8]/50 border border-[#F15A35]/30 rounded-2xl flex items-start gap-2.5 text-xs text-[#242321]">
+            <AlertCircle className="w-4 h-4 text-[#F15A35] shrink-0 mt-0.5" />
+            <span className="leading-relaxed">
               <strong>Accounting Rule:</strong> Only record transactions where funds have actually cleared in your bank accounts. Do not record promises or uncollected invoices here.
             </span>
           </div>
 
-          <div className="pt-2 flex items-center justify-end gap-2">
+          <div className="pt-2 flex items-center justify-end gap-2.5">
             <Button
               type="button"
               variant="outline"

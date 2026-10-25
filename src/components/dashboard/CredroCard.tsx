@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   ShieldCheck,
   Award,
@@ -46,22 +47,21 @@ export function CredroCard({ credro }: CredroCardProps) {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 85) return "text-emerald-600";
-    if (score >= 70) return "text-blue-600";
-    if (score >= 50) return "text-amber-500";
-    return "text-rose-600";
+    if (score >= 70) return "text-[#138C83]";
+    if (score >= 50) return "text-[#F15A35]";
+    return "text-[#d94824]";
   };
 
   const getFactorBarColor = (status: CredroFactor["status"]) => {
     switch (status) {
       case "positive":
-        return "bg-emerald-500";
+        return "bg-[#138C83]";
       case "neutral":
-        return "bg-blue-500";
+        return "bg-[#7A7369]";
       case "warning":
-        return "bg-amber-500";
+        return "bg-[#F15A35]";
       case "danger":
-        return "bg-rose-500";
+        return "bg-[#d94824]";
     }
   };
 
@@ -72,42 +72,51 @@ export function CredroCard({ credro }: CredroCardProps) {
 
   return (
     <>
-      <Card className="border border-slate-200/90 shadow-sm bg-gradient-to-br from-white via-slate-50/50 to-amber-50/20 overflow-hidden">
-        <CardHeader className="pb-3 border-b border-slate-100/90 bg-white/80 backdrop-blur-sm">
+      <Card className="border border-[#E8E1D5] shadow-xs bg-white rounded-2xl sm:rounded-3xl overflow-hidden">
+        <CardHeader className="pb-3 border-b border-[#E8E1D5] bg-white">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-500 flex items-center justify-center shadow-sm text-white">
+              <div className="w-10 h-10 rounded-2xl bg-[#FCE4D8] flex items-center justify-center text-[#F15A35] shrink-0">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <CardTitle className="text-base font-bold text-slate-900 tracking-tight">
+                  <CardTitle className="text-base font-extrabold text-[#242321] tracking-tight">
                     Credro™ Business Trust Score
                   </CardTitle>
                   <Badge variant={getTrustBadgeVariant(credro.trustLevel)} size="sm">
                     {credro.trustLevel} Trust
                   </Badge>
                   {credro.isPreliminary && (
-                    <Badge variant="neutral" size="sm" className="bg-slate-100 text-slate-600 border-slate-300">
+                    <Badge variant="neutral" size="sm" className="bg-[#F7F3EA] text-[#7A7369] border-[#E8E1D5]">
                       Preliminary
                     </Badge>
                   )}
                 </div>
-                <CardDescription className="text-xs text-slate-500 mt-0.5">
+                <CardDescription className="text-xs text-[#7A7369] mt-0.5">
                   AI-evaluated operational reliability, payment discipline & cash stability
                 </CardDescription>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
+              <Link href="/credro">
+                <button
+                  type="button"
+                  className="text-xs text-[#F15A35] hover:underline font-bold inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#F15A35]/30 bg-[#FCE4D8]/50 hover:bg-[#FCE4D8] transition-colors"
+                >
+                  <span>Full Score Report</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              </Link>
               <button
                 type="button"
                 onClick={() => setShowFormulaModal(true)}
-                className="text-xs text-slate-500 hover:text-slate-800 font-medium inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+                className="text-xs text-[#7A7369] hover:text-[#242321] font-bold inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[#E8E1D5] hover:bg-[#F7F3EA] transition-colors"
                 title="View transparent scoring methodology"
               >
-                <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-                <span>How it&apos;s calculated</span>
+                <HelpCircle className="w-3.5 h-3.5 text-[#A69C8D]" />
+                <span>Methodology</span>
               </button>
             </div>
           </div>
@@ -117,7 +126,7 @@ export function CredroCard({ credro }: CredroCardProps) {
           {/* Main Visual Summary Section */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
             {/* Visual Ring Gauge */}
-            <div className="md:col-span-4 flex items-center gap-5 p-4 rounded-2xl bg-white border border-slate-100 shadow-sm">
+            <div className="md:col-span-4 flex items-center gap-5 p-4 rounded-2xl bg-[#F7F3EA]/50 border border-[#E8E1D5] shadow-xs">
               <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 96 96">
                   {/* Background track */}
@@ -125,7 +134,7 @@ export function CredroCard({ credro }: CredroCardProps) {
                     cx="48"
                     cy="48"
                     r={radius}
-                    className="stroke-slate-100"
+                    stroke="#E8E1D5"
                     strokeWidth="8"
                     fill="transparent"
                   />
@@ -134,20 +143,13 @@ export function CredroCard({ credro }: CredroCardProps) {
                     cx="48"
                     cy="48"
                     r={radius}
-                    className={`transition-all duration-700 ease-out ${
-                      credro.score >= 85
-                        ? "stroke-emerald-500"
-                        : credro.score >= 70
-                        ? "stroke-blue-500"
-                        : credro.score >= 50
-                        ? "stroke-amber-500"
-                        : "stroke-rose-500"
-                    }`}
+                    stroke={credro.score >= 70 ? "#138C83" : credro.score >= 50 ? "#F15A35" : "#d94824"}
                     strokeWidth="8"
                     strokeDasharray={circumference}
                     strokeDashoffset={strokeDashoffset}
                     strokeLinecap="round"
                     fill="transparent"
+                    className="transition-all duration-700 ease-out"
                   />
                 </svg>
                 {/* Score in center */}
@@ -155,17 +157,17 @@ export function CredroCard({ credro }: CredroCardProps) {
                   <span className={`text-2xl font-black tracking-tight leading-none ${getScoreColor(credro.score)}`}>
                     {credro.score}
                   </span>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 mt-0.5">/ 100</span>
+                  <span className="text-[10px] uppercase font-bold text-[#A69C8D] mt-0.5">/ 100</span>
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-semibold text-slate-500">Trust Level</span>
+                  <span className="text-xs font-bold text-[#7A7369]">Trust Level</span>
                   {credro.scoreChange !== null && credro.scoreChange !== 0 && (
                     <span
                       className={`text-[11px] font-bold inline-flex items-center gap-0.5 ${
-                        credro.scoreChange > 0 ? "text-emerald-600" : "text-rose-600"
+                        credro.scoreChange > 0 ? "text-[#138C83]" : "text-[#F15A35]"
                       }`}
                     >
                       {credro.scoreChange > 0 ? (
@@ -177,7 +179,7 @@ export function CredroCard({ credro }: CredroCardProps) {
                     </span>
                   )}
                 </div>
-                <div className="text-base font-extrabold text-slate-900 mt-0.5">
+                <div className="text-base font-extrabold text-[#242321] mt-0.5">
                   {credro.trustLevel} Reliability
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">

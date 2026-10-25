@@ -143,45 +143,45 @@ export function COINCISEAssistant() {
 
   return (
     <>
-      {/* 1. Floating Action Button (Unobtrusive bottom-right) */}
+      {/* 1. Floating Action Button (Unobtrusive bottom-right, clear of mobile bottom bar) */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-5 right-5 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-amber-500 text-white font-semibold text-xs shadow-lg shadow-blue-500/25 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 group border border-white/20"
+          className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-[#242321] text-white font-bold text-xs shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 group border border-white/20"
           aria-label="Open COINCISE Assistant"
         >
-          <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-amber-200 group-hover:rotate-12 transition-transform" />
+          <div className="w-5 h-5 rounded-full bg-[#F15A35] flex items-center justify-center">
+            <Sparkles className="w-3 h-3 text-white group-hover:rotate-12 transition-transform" />
           </div>
           <span className="tracking-wide">Ask Assistant</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-[#138C83] animate-pulse" />
         </button>
       )}
 
       {/* 2. Floating Chat Panel */}
       {isOpen && (
         <div
-          className={`fixed z-50 transition-all duration-200 shadow-2xl rounded-2xl border border-slate-200/90 bg-white flex flex-col overflow-hidden ${
+          className={`fixed z-50 transition-all duration-200 shadow-2xl rounded-2xl sm:rounded-3xl border border-[#E8E1D5] bg-white flex flex-col overflow-hidden ${
             isMinimized
-              ? "bottom-5 right-5 w-72 h-14"
-              : "bottom-4 right-4 sm:bottom-6 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 md:w-[420px] h-[540px] max-h-[85vh]"
+              ? "bottom-20 md:bottom-6 right-4 md:right-6 w-72 h-14"
+              : "bottom-16 md:bottom-6 right-3 sm:right-6 w-[calc(100vw-1.5rem)] sm:w-96 md:w-[420px] h-[540px] max-h-[80vh]"
           }`}
         >
           {/* Chat Header */}
-          <div className="px-4 py-3 bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 text-white flex items-center justify-between border-b border-slate-800">
+          <div className="px-4 py-3.5 bg-[#242321] text-white flex items-center justify-between border-b border-[#242321]">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-[#F15A35] flex items-center justify-center text-white shadow-xs">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="font-bold text-xs text-white tracking-wide">COINCISE Assistant</h3>
-                  <span className="text-[9px] uppercase font-bold tracking-wider px-1 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">
-                    Gemini
+                  <h3 className="font-extrabold text-xs text-white tracking-wide">COINCISE Assistant</h3>
+                  <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.2 bg-[#FCE4D8] text-[#F15A35] rounded-full border border-[#F15A35]/30">
+                    AI
                   </span>
                 </div>
                 {!isMinimized && (
-                  <p className="text-[10px] text-slate-400 font-medium">In-App Navigation & Guidance</p>
+                  <p className="text-[10px] text-[#A69C8D] font-medium">In-App Navigation & Guidance</p>
                 )}
               </div>
             </div>
@@ -190,7 +190,7 @@ export function COINCISEAssistant() {
               <button
                 type="button"
                 onClick={() => setIsMinimized((prev) => !prev)}
-                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className="p-1 rounded-lg hover:bg-white/10 text-[#A69C8D] hover:text-white transition-colors"
                 title={isMinimized ? "Expand" : "Minimize"}
               >
                 {isMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
@@ -198,7 +198,7 @@ export function COINCISEAssistant() {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className="p-1 rounded-lg hover:bg-white/10 text-[#A69C8D] hover:text-white transition-colors"
                 title="Close chat"
               >
                 <X className="w-4 h-4" />
@@ -210,7 +210,7 @@ export function COINCISEAssistant() {
           {!isMinimized && (
             <>
               {/* Message History */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/50">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#F7F3EA]/60">
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
@@ -221,8 +221,8 @@ export function COINCISEAssistant() {
                     <div
                       className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
                         msg.sender === "user"
-                          ? "bg-blue-600 text-white"
-                          : "bg-slate-900 text-amber-300"
+                          ? "bg-[#F15A35] text-white"
+                          : "bg-[#242321] text-[#F15A35]"
                       }`}
                     >
                       {msg.sender === "user" ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
@@ -231,22 +231,22 @@ export function COINCISEAssistant() {
                     <div
                       className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs shadow-xs leading-relaxed ${
                         msg.sender === "user"
-                          ? "bg-blue-600 text-white rounded-tr-xs"
-                          : "bg-white border border-slate-200/80 text-slate-800 rounded-tl-xs"
+                          ? "bg-[#F15A35] text-white rounded-tr-xs"
+                          : "bg-white border border-[#E8E1D5] text-[#242321] rounded-tl-xs"
                       }`}
                     >
                       <div className="whitespace-pre-line prose-xs">{msg.text}</div>
 
                       {msg.configurationRequired && (
-                        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10px] text-amber-700">
-                          <AlertCircle className="w-3 h-3 text-amber-600 shrink-0" />
+                        <div className="mt-2 pt-2 border-t border-[#E8E1D5] flex items-center gap-1.5 text-[10px] text-[#F15A35]">
+                          <AlertCircle className="w-3 h-3 text-[#F15A35] shrink-0" />
                           <span>Tip: Set GEMINI_API_KEY in .env.local for full AI responses</span>
                         </div>
                       )}
 
                       <div
                         className={`text-[9px] mt-1 flex items-center justify-end gap-1 ${
-                          msg.sender === "user" ? "text-blue-200" : "text-slate-400"
+                          msg.sender === "user" ? "text-white/80" : "text-[#A69C8D]"
                         }`}
                       >
                         <span>{msg.timestamp}</span>
@@ -258,11 +258,11 @@ export function COINCISEAssistant() {
 
                 {isLoading && (
                   <div className="flex items-start gap-2.5">
-                    <div className="w-6 h-6 rounded-full bg-slate-900 text-amber-300 flex items-center justify-center shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-[#242321] text-[#F15A35] flex items-center justify-center shrink-0">
                       <Bot className="w-3.5 h-3.5" />
                     </div>
-                    <div className="bg-white border border-slate-200/80 rounded-2xl rounded-tl-xs px-3.5 py-2.5 text-xs text-slate-500 flex items-center gap-2 shadow-xs">
-                      <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
+                    <div className="bg-white border border-[#E8E1D5] rounded-2xl rounded-tl-xs px-3.5 py-2.5 text-xs text-[#7A7369] flex items-center gap-2 shadow-xs">
+                      <Loader2 className="w-3.5 h-3.5 text-[#F15A35] animate-spin" />
                       <span>COINCISE Assistant is thinking...</span>
                     </div>
                   </div>
@@ -273,19 +273,19 @@ export function COINCISEAssistant() {
 
               {/* Suggested Questions Section */}
               {messages.length <= 3 && (
-                <div className="px-4 py-2 bg-white border-t border-slate-100">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                    <HelpCircle className="w-3 h-3 text-slate-400" />
+                <div className="px-4 py-2.5 bg-white border-t border-[#E8E1D5]">
+                  <div className="text-[10px] font-bold text-[#A69C8D] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <HelpCircle className="w-3 h-3 text-[#A69C8D]" />
                     Suggested Questions
                   </div>
-                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto py-0.5">
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto py-0.5 no-scrollbar">
                     {SUGGESTED_QUESTIONS.map((q, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => handleSendMessage(q)}
                         disabled={isLoading}
-                        className="text-[11px] text-slate-600 hover:text-blue-700 hover:bg-blue-50 bg-slate-100/90 border border-slate-200/70 rounded-full px-2.5 py-1 text-left transition-colors font-medium flex items-center gap-1"
+                        className="text-[11px] text-[#242321] hover:text-[#F15A35] hover:bg-[#FCE4D8] bg-[#F7F3EA] border border-[#E8E1D5] rounded-full px-2.5 py-1 text-left transition-colors font-medium flex items-center gap-1"
                       >
                         <span>{q}</span>
                         <ChevronRight className="w-2.5 h-2.5 opacity-50" />
@@ -296,7 +296,7 @@ export function COINCISEAssistant() {
               )}
 
               {/* Chat Input Footer */}
-              <div className="p-3 bg-white border-t border-slate-100">
+              <div className="p-3 bg-white border-t border-[#E8E1D5]">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -311,12 +311,12 @@ export function COINCISEAssistant() {
                     onKeyDown={handleKeyDown}
                     placeholder="Ask how to navigate COINCISE..."
                     disabled={isLoading}
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:bg-white transition-all disabled:opacity-50"
+                    className="flex-1 bg-[#F7F3EA] border border-[#E8E1D5] rounded-xl px-3.5 py-2 text-xs text-[#242321] placeholder:text-[#A69C8D] focus:outline-none focus:ring-2 focus:ring-[#F15A35] focus:bg-white transition-all disabled:opacity-50"
                   />
                   <button
                     type="submit"
                     disabled={!inputMessage.trim() || isLoading}
-                    className="w-8 h-8 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:hover:bg-blue-600 text-white flex items-center justify-center transition-all shrink-0 shadow-xs"
+                    className="w-8 h-8 rounded-xl bg-[#F15A35] hover:bg-[#d94824] disabled:opacity-40 disabled:hover:bg-[#F15A35] text-white flex items-center justify-center transition-all shrink-0 shadow-xs"
                     title="Send message"
                   >
                     {isLoading ? (
@@ -326,7 +326,7 @@ export function COINCISEAssistant() {
                     )}
                   </button>
                 </form>
-                <div className="mt-1.5 text-[10px] text-slate-400 text-center">
+                <div className="mt-1.5 text-[10px] text-[#A69C8D] text-center">
                   Assistant guides navigation and explanations; it cannot modify transactions or make payments.
                 </div>
               </div>

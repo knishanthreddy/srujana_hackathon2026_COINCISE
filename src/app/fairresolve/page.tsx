@@ -187,17 +187,17 @@ export default function FairResolvePage() {
       {/* Official MSME ODR Alignment & Legal Disclaimer */}
       <div className="p-4 bg-amber-50/90 border border-amber-300 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs text-amber-950 shadow-sm">
         <div className="flex items-start gap-3">
-          <div className="p-2 bg-amber-100 rounded-xl text-amber-800 shrink-0 mt-0.5">
-            <Scale className="w-5 h-5" />
+          <div className="p-2.5 bg-[#FCE4D8] rounded-2xl text-[#F15A35] shrink-0 mt-0.5">
+            <Scale className="w-5 h-5 text-[#F15A35]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold uppercase tracking-wider text-[10px] text-amber-900 bg-amber-200/60 px-2 py-0.5 rounded">
+              <span className="font-extrabold uppercase tracking-wider text-[10px] text-[#F15A35] bg-[#FCE4D8] px-2 py-0.5 rounded-full border border-[#F15A35]/30">
                 STATUTORY DISPUTE FRAMEWORK
               </span>
-              <span className="font-semibold">Direct Commercial Settlement Protocol</span>
+              <span className="font-bold text-xs text-[#242321]">Direct Commercial Settlement Protocol</span>
             </div>
-            <p className="mt-1 leading-relaxed text-amber-900/90">
+            <p className="mt-1 leading-relaxed text-xs text-[#7A7369]">
               FairResolve facilitates structured dispute communication, evidence logging, and consensual settlement formulation between commercial buyers and sellers.
               <strong> FairResolve is not a government-authorized arbitration or judicial service.</strong>
               If direct negotiations deadlock, eligible enterprises can escalate directly to the official statutory Online Dispute Resolution portal.
@@ -214,32 +214,33 @@ export default function FairResolvePage() {
           <Button
             size="sm"
             variant="outline"
-            className="border-amber-400 bg-white text-amber-900 hover:bg-amber-100 font-semibold"
+            className="border-[#E8E1D5] bg-white text-[#242321] hover:bg-[#F7F3EA] font-bold"
           >
             <span>Official MSME ODR Portal</span>
-            <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
+            <ExternalLink className="w-3.5 h-3.5 ml-1.5 text-[#F15A35]" />
           </Button>
         </a>
       </div>
 
       {/* Main Dispute Control Bar */}
-      <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-5 sm:p-6 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-[#242321] tracking-tight flex items-center gap-2">
             <span>FairResolve Payment Dispute Workspace</span>
             <Badge variant="neutral" className="text-xs">
               {disputes.length} Cases Logged
             </Badge>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#7A7369] mt-0.5">
             Maintain transparent audit trails, formal responses, documentary proof, and mutual settlement agreements without double-counting ledger transactions.
           </p>
         </div>
 
         <Button
           size="sm"
+          variant="primary"
           onClick={() => setIsNewDisputeModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+          className="shrink-0"
         >
           <PlusCircle className="w-4 h-4 mr-1.5" />
           Open New Dispute Case

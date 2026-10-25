@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "danger" | "ghost";
+  variant?: "primary" | "secondary" | "outline" | "danger" | "ghost" | "teal";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
 }
@@ -18,21 +18,23 @@ export function Button({
 }: ButtonProps) {
   const variantStyles = {
     primary:
-      "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm shadow-blue-500/20 border border-blue-600 focus-visible:ring-blue-500",
+      "bg-[#F15A35] text-white hover:bg-[#DE4924] active:bg-[#C83B18] shadow-sm shadow-[#F15A35]/20 border border-[#F15A35] focus-visible:ring-[#F15A35]",
     secondary:
-      "bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-950 border border-slate-900 focus-visible:ring-slate-900",
+      "bg-[#242321] text-white hover:bg-[#383532] active:bg-[#1a1917] border border-[#242321] focus-visible:ring-[#242321]",
     outline:
-      "bg-white text-slate-700 hover:bg-slate-50 border border-slate-300 focus-visible:ring-slate-400 shadow-sm",
+      "bg-white text-[#242321] hover:bg-[#F7F3EA] border border-[#E8E1D5] focus-visible:ring-[#A69C8D] shadow-2xs",
     danger:
       "bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 border border-rose-600 focus-visible:ring-rose-500",
     ghost:
-      "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent",
+      "bg-transparent text-[#242321] hover:bg-[#E8E1D5]/50 border border-transparent",
+    teal:
+      "bg-[#138C83] text-white hover:bg-[#0E6E67] active:bg-[#0A544E] border border-[#138C83] focus-visible:ring-[#138C83]",
   };
 
   const sizeStyles = {
-    sm: "h-8 px-3 text-xs gap-1.5 rounded-lg",
-    md: "h-9 px-4 text-sm gap-2 rounded-lg",
-    lg: "h-11 px-6 text-base gap-2.5 rounded-xl",
+    sm: "h-8 px-3 text-xs gap-1.5 rounded-xl",
+    md: "h-9.5 px-4 text-xs font-semibold sm:text-sm gap-2 rounded-xl",
+    lg: "h-11 px-6 text-sm sm:text-base gap-2.5 rounded-2xl",
   };
 
   return (
@@ -64,7 +66,7 @@ export function Button({
           <path
             className="opacity-75"
             fill="currentColor"
-            d="M4 12a8 8 0 018-8v8H4z"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           />
         </svg>
       )}

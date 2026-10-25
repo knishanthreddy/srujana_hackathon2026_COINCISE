@@ -305,21 +305,21 @@ export default function SettingsPage() {
       )}
 
       {/* Page Header */}
-      <div className="p-5 bg-white rounded-2xl border border-stone-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 sm:p-6 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <Settings className="w-5 h-5 text-teal-700" />
+          <h2 className="text-xl sm:text-2xl font-extrabold text-[#242321] tracking-tight flex items-center gap-2">
+            <Settings className="w-5 h-5 text-[#F15A35]" />
             System & Business Settings
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#7A7369] mt-0.5">
             Manage legal entity parameters, bank accounts, liquid reserves, and forecast assumptions.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Link href="/onboarding">
-            <Button variant="outline" size="sm" className="text-teal-700 border-teal-200 hover:bg-teal-50">
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+            <Button variant="outline" size="sm" className="font-bold">
+              <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#F15A35]" />
               Launch Setup Wizard
             </Button>
           </Link>
@@ -330,7 +330,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Settings Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-stone-200 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-[#E8E1D5] pb-3 overflow-x-auto">
         {[
           { id: "company", label: "Business & MCA Profile", icon: Building },
           { id: "finances", label: "Bank Accounts & Liquid Cash", icon: Wallet },
@@ -345,8 +345,8 @@ export default function SettingsPage() {
               onClick={() => setActiveTab(t.id as SettingsTab)}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all whitespace-nowrap ${
                 isActive
-                  ? "bg-teal-700 text-white shadow-xs"
-                  : "bg-white text-slate-600 border border-stone-200 hover:bg-stone-50"
+                  ? "bg-[#F15A35] text-white shadow-xs"
+                  : "bg-white text-[#7A7369] border border-[#E8E1D5] hover:bg-[#F7F3EA]"
               }`}
             >
               <Icon className="w-4 h-4" />

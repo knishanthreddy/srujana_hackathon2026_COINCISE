@@ -469,21 +469,21 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fcfcf9] text-slate-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#F7F3EA] text-[#242321] flex flex-col font-sans">
       {/* Top Banner Navigation */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-200/90 px-4 lg:px-8 py-3.5 flex items-center justify-between shadow-xs">
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E8E1D5] px-4 lg:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-700 to-teal-500 flex items-center justify-center shadow-md shadow-teal-700/20 text-white font-bold">
+          <div className="w-10 h-10 rounded-2xl bg-[#F15A35] flex items-center justify-center shadow-orange text-white font-bold">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-slate-900 tracking-tight text-base">COINCISE</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200">
+              <span className="font-extrabold text-[#242321] tracking-wider text-base">COINCISE</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FCE4D8] text-[#F15A35] border border-[#F15A35]/30">
                 Financial Setup Wizard
               </span>
             </div>
-            <p className="text-xs text-slate-500">Legal entity registration, liquid cash segregation & predictive forecasting</p>
+            <p className="text-xs text-[#7A7369]">Legal entity registration, liquid cash segregation & predictive forecasting</p>
           </div>
         </div>
 

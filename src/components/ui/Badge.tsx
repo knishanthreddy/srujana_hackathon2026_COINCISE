@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "neutral" | "success" | "warning" | "danger" | "info" | "primary" | "purple";
+  variant?: "neutral" | "success" | "warning" | "danger" | "info" | "primary" | "purple" | "teal";
   size?: "sm" | "md";
 }
 
@@ -14,17 +14,18 @@ export function Badge({
   ...props
 }: BadgeProps) {
   const variantStyles = {
-    neutral: "bg-slate-100 text-slate-700 border-slate-200",
-    success: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    warning: "bg-amber-50 text-amber-700 border-amber-200",
+    neutral: "bg-[#E8E1D5]/60 text-[#242321] border-[#E8E1D5]",
+    primary: "bg-[#FCE4D8] text-[#F15A35] border-[#F15A35]/30 font-semibold",
+    success: "bg-[#DDEFE8] text-[#138C83] border-[#138C83]/30 font-semibold",
+    warning: "bg-[#FCE4D8] text-[#F15A35] border-[#F15A35]/30",
     danger: "bg-rose-50 text-rose-700 border-rose-200",
-    info: "bg-blue-50 text-blue-700 border-blue-200",
-    primary: "bg-indigo-50 text-indigo-700 border-indigo-200",
-    purple: "bg-purple-50 text-purple-700 border-purple-200",
+    info: "bg-[#DDEFE8] text-[#138C83] border-[#138C83]/30",
+    purple: "bg-[#F7F3EA] text-[#242321] border-[#E8E1D5]",
+    teal: "bg-[#138C83] text-white border-transparent font-medium",
   };
 
   const sizeStyles = {
-    sm: "px-2 py-0.5 text-xs font-medium",
+    sm: "px-2 py-0.5 text-[11px] font-medium",
     md: "px-2.5 py-1 text-xs font-semibold",
   };
 
