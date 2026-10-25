@@ -1,23 +1,42 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
 import { addFinancialRecord } from "@/lib/data-service";
+import { isOnboardingCompleted, EVENT_ONBOARDING_UPDATED } from "@/lib/onboarding-service";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [onboardingDone, setOnboardingDone] = useState(true);
+
+  useEffect(() => {
+    setOnboardingDone(isOnboardingCompleted());
+    const handler = () => {
+      setOnboardingDone(isOnboardingCompleted());
+    };
+    window.addEventListener(EVENT_ONBOARDING_UPDATED, handler);
+    return () => window.removeEventListener(EVENT_ONBOARDING_UPDATED, handler);
+  }, []);
 
   // Quick transaction form state
   const [formType, setFormType] = useState<"income" | "expense">("income");
   const [formAmount, setFormAmount] = useState("");
   const [formCategory, setFormCategory] = useState("Sales");
   const [formDesc, setFormDesc] = useState("");
+
+  // Distraction-free standalone shell for Onboarding Wizard
+  if (pathname === "/onboarding") {
+    return <>{children}</>;
+  }
 
   const handleCreateRecord = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +94,39 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 Dismiss
               </button>
+            </div>
+          )}
+
+          {/* Business Onboarding Incomplete Reminder Banner */}
+          {!onboardingDone && (
+            <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-blue-900 to-indigo-950 text-white border border-blue-700/60 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-600/40 text-blue-300 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 text-cyan-300" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-white flex items-center gap-2">
+                    <span>Business Setup Incomplete</span>
+                    <span className="text-[10px] bg-blue-500/30 text-blue-200 px-1.5 py-0.5 rounded font-medium">
+                      Action Recommended
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-blue-200 mt-0.5">
+                    Configure your registered legal entity, CIN verification, opening bank balances, and predictive forecast rules.
+                  </div>
+                </div>
+              </div>
+
+              <Link href="/onboarding" className="shrink-0">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm w-full sm:w-auto"
+                >
+                  <span>Launch Setup Wizard</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </Link>
             </div>
           )}
 

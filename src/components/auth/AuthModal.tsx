@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Lock,
   Mail,
@@ -11,11 +12,13 @@ import {
   AlertCircle,
   LogOut,
   ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { isSupabaseConfigured, getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isOnboardingCompleted } from "@/lib/onboarding-service";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -23,6 +26,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
+  const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -78,7 +82,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         });
         if (error) throw error;
         setMessage({ type: "success", text: "Signed in successfully!" });
-        setTimeout(() => onClose(), 1000);
+        const isComplete = isOnboardingCompleted();
+        setTimeout(() => {
+          onClose();
+          if (!isComplete) {
+            router.push("/onboarding");
+          } else {
+            router.push("/");
+          }
+        }, 800);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Authentication failed";
@@ -175,7 +187,19 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               <p className="text-slate-500">2. Set your Supabase URL & Anon Key</p>
               <p className="text-slate-500">3. Apply migration: <span className="text-blue-600">supabase/migrations/...</span></p>
             </div>
-            <div className="pt-2 flex justify-end">
+            <div className="pt-2 flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onClose();
+                  router.push("/onboarding");
+                }}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1 text-blue-600" />
+                Launch Setup Wizard
+              </Button>
               <Button size="sm" onClick={onClose}>
                 Continue in Demo Mode
               </Button>

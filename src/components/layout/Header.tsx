@@ -69,6 +69,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "System & Business Settings",
     subtitle: "Configure business profile, reserve safety levels and alert rules",
   },
+  "/onboarding": {
+    title: "Business Setup Wizard",
+    subtitle: "Entity registration, opening liquidity & predictive rules",
+  },
 };
 
 export function Header({ onToggleSidebar, onOpenNewRecordModal }: HeaderProps) {

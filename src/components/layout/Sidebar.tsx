@@ -45,6 +45,7 @@ const mainNavItems: NavItem[] = [
 ];
 
 const secondaryNavItems: NavItem[] = [
+  { name: "Setup Wizard", href: "/onboarding", icon: Sparkles, badge: "Setup", badgeVariant: "info" },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
