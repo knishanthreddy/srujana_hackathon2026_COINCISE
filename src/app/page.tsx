@@ -26,6 +26,8 @@ import {
   Sparkles,
   FileText,
   CreditCard,
+  UploadCloud,
+  Landmark,
 } from "lucide-react";
 import {
   AreaChart,
@@ -116,11 +118,19 @@ export default function DashboardPage() {
   const payTotals = useMemo(() => calculatePayablesTotals(payables), [payables]);
 
   // Unified available cash calculation
-  const dashboardMetrics = useMemo(() => getUnifiedDashboardMetrics(), [records, receivables, payables]);
+  const dashboardMetrics = useMemo(() => {
+    void records;
+    void receivables;
+    void payables;
+    return getUnifiedDashboardMetrics();
+  }, [records, receivables, payables]);
   const currentAvailableCash = dashboardMetrics.availableCash;
 
   // Live forecast trajectory from deterministic forecasting engine
   const liveForecast = useMemo(() => {
+    void records;
+    void receivables;
+    void payables;
     return getLiveForecast(horizon, minimumReserve);
   }, [horizon, minimumReserve, records, receivables, payables]);
 
@@ -187,7 +197,6 @@ export default function DashboardPage() {
     recTotals,
     receivables,
     payTotals,
-    payables,
     credroResult,
     minimumReserve,
   ]);
@@ -382,7 +391,7 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* 4. Quick Actions Row (4 compact buttons) */}
+      {/* 4. Quick Actions Row (5 explicit shortcuts) */}
       <div className="p-4 bg-white rounded-2xl sm:rounded-3xl border border-[#E8E1D5] shadow-xs">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-extrabold text-[#242321] uppercase tracking-wider">
@@ -390,44 +399,59 @@ export default function DashboardPage() {
           </span>
           <span className="text-[11px] text-[#A69C8D]">Instant workstation shortcuts</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {/* Shortcut 1: Upload Documents */}
+          <Link href="/documents" className="block">
+            <button
+              type="button"
+              className="w-full py-2.5 px-3 rounded-xl bg-[#F7F3EA] hover:bg-[#DDEFE8] text-[#242321] hover:text-[#138C83] border border-[#E8E1D5] text-xs font-bold transition-all flex items-center justify-center gap-2 group cursor-pointer"
+            >
+              <UploadCloud className="w-4 h-4 text-[#138C83] group-hover:scale-110 transition-transform" />
+              <span>Upload Documents</span>
+            </button>
+          </Link>
+
+          {/* Shortcut 2: Create Invoice */}
+          <Link href="/invoices/new" className="block">
+            <button
+              type="button"
+              className="w-full py-2.5 px-3 rounded-xl bg-[#F7F3EA] hover:bg-[#FCE4D8] text-[#242321] hover:text-[#F15A35] border border-[#E8E1D5] text-xs font-bold transition-all flex items-center justify-center gap-2 group cursor-pointer"
+            >
+              <FileText className="w-4 h-4 text-[#F15A35] group-hover:scale-110 transition-transform" />
+              <span>Create Invoice</span>
+            </button>
+          </Link>
+
+          {/* Shortcut 3: Add Transaction */}
           <Link href="/records" className="block">
             <button
               type="button"
-              className="w-full py-2.5 px-3 rounded-xl bg-[#F7F3EA] hover:bg-[#FCE4D8] text-[#242321] hover:text-[#F15A35] border border-[#E8E1D5] text-xs font-bold transition-all flex items-center justify-center gap-2 group"
+              className="w-full py-2.5 px-3 rounded-xl bg-[#F7F3EA] hover:bg-[#FCE4D8] text-[#242321] hover:text-[#F15A35] border border-[#E8E1D5] text-xs font-bold transition-all flex items-center justify-center gap-2 group cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4 text-[#F15A35] group-hover:scale-110 transition-transform" />
-              <span>Record Ledger</span>
+              <ReceiptText className="w-4 h-4 text-[#F15A35] group-hover:scale-110 transition-transform" />
+              <span>Add Transaction</span>
             </button>
           </Link>
 
-          <Link href="/receivables" className="block">
-            <button
-              type="button"
-              className="w-full py-2.5 px-3 rounded-xl bg-[#F7F3EA] hover:bg-[#DDEFE8] text-[#242321] hover:text-[#138C83] border border-[#E8E1D5] text-xs font-bold transition-all flex items-center justify-center gap-2 group"
-            >
-              <FileText className="w-4 h-4 text-[#138C83] group-hover:scale-110 transition-transform" />
-              <span>Customer Invoices</span>
-            </button>
-          </Link>
-
-          <Link href="/payables" className="block">
-            <button
-              type="button"
-              className="w-full py-2.5 px-3 rounded-xl bg-[#F7F3EA] hover:bg-[#FCE4D8] text-[#242321] hover:text-[#F15A35] border border-[#E8E1D5] text-xs font-bold transition-all flex items-center justify-center gap-2 group"
-            >
-              <CreditCard className="w-4 h-4 text-[#F15A35] group-hover:scale-110 transition-transform" />
-              <span>Pay Supplier</span>
-            </button>
-          </Link>
-
+          {/* Shortcut 4: View Forecast */}
           <Link href="/forecast" className="block">
             <button
               type="button"
-              className="w-full py-2.5 px-3 rounded-xl bg-[#F7F3EA] hover:bg-[#DDEFE8] text-[#242321] hover:text-[#138C83] border border-[#E8E1D5] text-xs font-bold transition-all flex items-center justify-center gap-2 group"
+              className="w-full py-2.5 px-3 rounded-xl bg-[#F7F3EA] hover:bg-[#DDEFE8] text-[#242321] hover:text-[#138C83] border border-[#E8E1D5] text-xs font-bold transition-all flex items-center justify-center gap-2 group cursor-pointer"
             >
               <TrendingUp className="w-4 h-4 text-[#138C83] group-hover:scale-110 transition-transform" />
               <span>View Forecast</span>
+            </button>
+          </Link>
+
+          {/* Shortcut 5: Find Government Schemes */}
+          <Link href="/schemes" className="block col-span-2 sm:col-span-1">
+            <button
+              type="button"
+              className="w-full py-2.5 px-3 rounded-xl bg-[#F7F3EA] hover:bg-[#DDEFE8] text-[#242321] hover:text-[#138C83] border border-[#E8E1D5] text-xs font-bold transition-all flex items-center justify-center gap-2 group cursor-pointer"
+            >
+              <Landmark className="w-4 h-4 text-[#138C83] group-hover:scale-110 transition-transform" />
+              <span>Find Govt Schemes</span>
             </button>
           </Link>
         </div>

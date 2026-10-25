@@ -24,6 +24,7 @@ import {
   ChevronRight,
   X,
   User,
+  Clock,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { DEMO_SUMMARY } from "@/lib/demo-data";
@@ -38,29 +39,68 @@ import { getOnboardingData, EVENT_ONBOARDING_UPDATED } from "@/lib/onboarding-se
 
 interface NavItem {
   name: string;
-  href: string;
+  href?: string;
+  action?: "assistant";
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
   badgeVariant?: "neutral" | "warning" | "danger" | "info" | "success" | "primary";
 }
 
-const allNavItems: NavItem[] = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Available Cash", href: "/cash", icon: Wallet },
-  { name: "Document Centre", href: "/documents", icon: UploadCloud, badge: "Import", badgeVariant: "primary" },
-  { name: "Financial Records", href: "/records", icon: ReceiptText },
-  { name: "Tax Invoices", href: "/invoices", icon: FileText, badge: "GST", badgeVariant: "primary" },
-  { name: "Receivables", href: "/receivables", icon: ArrowDownLeft, badge: "3 Overdue", badgeVariant: "warning" },
-  { name: "Payables", href: "/payables", icon: ArrowUpRight, badge: "Upcoming", badgeVariant: "neutral" },
-  { name: "Cash-Flow Forecast", href: "/forecast", icon: TrendingUp },
-  { name: "Scenario Lab", href: "/scenarios", icon: FlaskConical },
-  { name: "Smart Alerts", href: "/alerts", icon: Bell, badge: "Active", badgeVariant: "danger" },
-  { name: "Decision Centre", href: "/decision-centre", icon: Compass },
-  { name: "Govt Schemes", href: "/schemes", icon: Landmark, badge: "Subsidies", badgeVariant: "success" },
-  { name: "Credro™ Trust Score", href: "/credro", icon: ShieldCheck, badge: "82", badgeVariant: "primary" },
-  { name: "FairResolve", href: "/fairresolve", icon: Scale, badge: "ODR", badgeVariant: "info" },
-  { name: "Reports & Analytics", href: "/reports", icon: BarChart3 },
-  { name: "Business Settings", href: "/settings", icon: Settings },
+interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
+
+const navigationGroups: NavGroup[] = [
+  {
+    title: "Home",
+    items: [
+      { name: "Dashboard", href: "/", icon: LayoutDashboard },
+      { name: "Financial Overview", href: "/cash", icon: Wallet },
+      { name: "Important Alerts", href: "/alerts", icon: Bell, badge: "Active", badgeVariant: "danger" },
+    ],
+  },
+  {
+    title: "Money",
+    items: [
+      { name: "Financial Records", href: "/records", icon: ReceiptText },
+      { name: "Customer Receivables", href: "/receivables", icon: ArrowDownLeft, badge: "3 Overdue", badgeVariant: "warning" },
+      { name: "Supplier Payables", href: "/payables", icon: ArrowUpRight, badge: "Upcoming", badgeVariant: "neutral" },
+      { name: "Cash-Flow Forecast", href: "/forecast", icon: TrendingUp },
+    ],
+  },
+  {
+    title: "Documents",
+    items: [
+      { name: "Document Centre", href: "/documents", icon: UploadCloud, badge: "Import", badgeVariant: "primary" },
+      { name: "Invoice Management", href: "/invoices", icon: FileText, badge: "GST", badgeVariant: "primary" },
+      { name: "Import History", href: "/documents?tab=history", icon: Clock },
+    ],
+  },
+  {
+    title: "Business Support",
+    items: [
+      { name: "Govt Schemes & Subsidies", href: "/schemes", icon: Landmark, badge: "Subsidies", badgeVariant: "success" },
+      { name: "Credro™ Trust Score", href: "/credro", icon: ShieldCheck, badge: "82", badgeVariant: "primary" },
+      { name: "Reports & Analytics", href: "/reports", icon: BarChart3 },
+    ],
+  },
+  {
+    title: "Tools",
+    items: [
+      { name: "Scenario Lab", href: "/scenarios", icon: FlaskConical },
+      { name: "Decision Centre", href: "/decision-centre", icon: Compass },
+      { name: "FairResolve (ODR)", href: "/fairresolve", icon: Scale, badge: "ODR", badgeVariant: "info" },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      { name: "Business Settings & Profile", href: "/settings", icon: Settings },
+      { name: "Business Setup Wizard", href: "/onboarding", icon: User },
+      { name: "COINCISE Assistant", action: "assistant", icon: Sparkles, badge: "AI Guide", badgeVariant: "primary" },
+    ],
+  },
 ];
 
 export function Sidebar({
@@ -175,52 +215,79 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* Navigation Link List */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          <div className="px-3 mb-2 flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#A69C8D]">
-              All Modules &amp; Tools
-            </span>
-            <span className="text-[9px] bg-[#DDEFE8] text-[#138C83] border border-[#138C83]/30 px-1.5 py-0.2 rounded-full font-bold">
-              13 Pages
-            </span>
-          </div>
+        {/* Navigation Link List by Structured Groups */}
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+          {navigationGroups.map((group) => (
+            <div key={group.title} className="space-y-1">
+              <div className="px-3 pt-2 pb-0.5 flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#A69C8D]">
+                  {group.title}
+                </span>
+              </div>
 
-          <nav className="space-y-1">
-            {allNavItems.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={cn(
-                    "flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-medium transition-all group",
-                    isActive
-                      ? "bg-[#FCE4D8] text-[#F15A35] font-bold shadow-2xs"
-                      : "text-[#242321] hover:bg-white hover:text-[#242321]"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+
+                  if (item.action === "assistant") {
+                    return (
+                      <button
+                        key={item.name}
+                        type="button"
+                        onClick={() => {
+                          window.dispatchEvent(new CustomEvent("coincise:open-assistant"));
+                          if (onClose) onClose();
+                        }}
+                        className="w-full flex items-center justify-between px-3.5 py-2 rounded-2xl text-xs font-medium transition-all group text-[#242321] hover:bg-white hover:text-[#242321] cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="w-4 h-4 text-[#F15A35] group-hover:scale-110 transition-transform shrink-0" />
+                          <span className="font-semibold">{item.name}</span>
+                        </div>
+                        {item.badge && (
+                          <Badge variant={item.badgeVariant || "primary"} size="sm" className="text-[10px] shrink-0">
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </button>
+                    );
+                  }
+
+                  const isActive = item.href === "/" ? pathname === "/" : pathname === item.href?.split("?")[0];
+
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href || "/"}
+                      onClick={onClose}
                       className={cn(
-                        "w-4 h-4 transition-colors",
-                        isActive ? "text-[#F15A35]" : "text-[#A69C8D] group-hover:text-[#242321]"
+                        "flex items-center justify-between px-3.5 py-2 rounded-2xl text-xs font-medium transition-all group",
+                        isActive
+                          ? "bg-[#FCE4D8] text-[#F15A35] font-bold shadow-2xs"
+                          : "text-[#242321] hover:bg-white hover:text-[#242321]"
                       )}
-                    />
-                    <span>{item.name}</span>
-                  </div>
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Icon
+                          className={cn(
+                            "w-4 h-4 transition-colors shrink-0",
+                            isActive ? "text-[#F15A35]" : "text-[#A69C8D] group-hover:text-[#242321]"
+                          )}
+                        />
+                        <span className="truncate">{item.name}</span>
+                      </div>
 
-                  {item.badge && (
-                    <Badge variant={item.badgeVariant || "neutral"} size="sm" className="text-[10px]">
-                      {item.badge}
-                    </Badge>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
+                      {item.badge && (
+                        <Badge variant={item.badgeVariant || "neutral"} size="sm" className="text-[10px] shrink-0 ml-1.5">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Drawer Footer: Available Cash Runway Pill */}

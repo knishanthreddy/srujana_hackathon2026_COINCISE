@@ -54,6 +54,7 @@ export default function SmartAlertsPage() {
 
   // Compute live smart alerts directly from application calculations
   const rawAlerts = useMemo(() => {
+    void refreshTrigger;
     const records = getFinancialRecords();
     const receivables = getReceivables();
     const payables = getPayables();

@@ -57,6 +57,16 @@ export function COINCISEAssistant() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Listen for programmatic open requests (e.g. from Sidebar or shortcuts)
+  useEffect(() => {
+    const handleOpen = () => {
+      setIsOpen(true);
+      setIsMinimized(false);
+    };
+    window.addEventListener("coincise:open-assistant", handleOpen);
+    return () => window.removeEventListener("coincise:open-assistant", handleOpen);
+  }, []);
+
   // Auto-scroll to bottom on new message
   useEffect(() => {
     if (isOpen && !isMinimized) {

@@ -76,6 +76,7 @@ export default function ForecastPage() {
 
   // Compute live forecast
   const forecast: ForecastSummary = useMemo(() => {
+    void refreshTrigger;
     return getLiveForecast(horizon, minimumReserve);
   }, [horizon, minimumReserve, refreshTrigger]);
 

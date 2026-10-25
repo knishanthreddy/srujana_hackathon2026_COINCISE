@@ -159,6 +159,7 @@ export default function DecisionCentrePage() {
 
   // 1. Calculate Base-Case Forecast (Zero Actions Applied)
   const baseForecast: ForecastSummary = useMemo(() => {
+    void refreshTrigger;
     return getLiveForecast(30, 250000);
   }, [refreshTrigger]);
 
@@ -191,6 +192,7 @@ export default function DecisionCentrePage() {
 
   // 3. Calculate Adjusted Forecast with Corrective Interventions Applied
   const adjustedForecast: ForecastSummary = useMemo(() => {
+    void refreshTrigger;
     return getLiveForecast(30, 250000, aggregatedModifiers);
   }, [aggregatedModifiers, refreshTrigger]);
 

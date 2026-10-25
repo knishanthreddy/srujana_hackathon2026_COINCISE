@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Wallet,
@@ -50,7 +50,7 @@ export function FinancialCardCarousel({ data }: { data: CarouselData }) {
   const totalCards = 6;
 
   // Sync scroll position with active index
-  const scrollToCard = (index: number) => {
+  const scrollToCard = useCallback((index: number) => {
     if (!scrollContainerRef.current) return;
     const container = scrollContainerRef.current;
     const cards = container.children;
@@ -60,17 +60,23 @@ export function FinancialCardCarousel({ data }: { data: CarouselData }) {
       container.scrollTo({ left: Math.max(0, scrollLeft), behavior: "smooth" });
       setActiveIndex(index);
     }
-  };
+  }, []);
 
-  const handlePrev = () => {
-    const nextIdx = Math.max(0, activeIndex - 1);
-    scrollToCard(nextIdx);
-  };
+  const handlePrev = useCallback(() => {
+    setActiveIndex((current) => {
+      const nextIdx = Math.max(0, current - 1);
+      scrollToCard(nextIdx);
+      return nextIdx;
+    });
+  }, [scrollToCard]);
 
-  const handleNext = () => {
-    const nextIdx = Math.min(totalCards - 1, activeIndex + 1);
-    scrollToCard(nextIdx);
-  };
+  const handleNext = useCallback(() => {
+    setActiveIndex((current) => {
+      const nextIdx = Math.min(totalCards - 1, current + 1);
+      scrollToCard(nextIdx);
+      return nextIdx;
+    });
+  }, [totalCards, scrollToCard]);
 
   // Listen to scroll events to update active dot
   const handleScroll = () => {
@@ -104,7 +110,7 @@ export function FinancialCardCarousel({ data }: { data: CarouselData }) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeIndex]);
+  }, [handleNext, handlePrev]);
 
   // Radius for Credro circular progress
   const radius = 34;

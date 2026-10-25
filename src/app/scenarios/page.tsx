@@ -80,6 +80,7 @@ export default function ScenarioLabPage() {
 
   // Compute Base-case Forecast (Zero modifiers)
   const baseForecast: ForecastSummary = useMemo(() => {
+    void refreshTrigger;
     return getLiveForecast(horizon, 250000);
   }, [horizon, refreshTrigger]);
 
@@ -115,6 +116,7 @@ export default function ScenarioLabPage() {
 
   // Compute Simulated Forecast via Forecasting Engine
   const simulatedForecast: ForecastSummary = useMemo(() => {
+    void refreshTrigger;
     return getLiveForecast(horizon, 250000, engineModifiers);
   }, [horizon, engineModifiers, refreshTrigger]);
 

@@ -106,6 +106,7 @@ export default function FairResolvePage() {
   }, [disputes, selectedDisputeId]);
 
   const receivables = useMemo(() => {
+    void refreshTrigger;
     return getReceivables();
   }, [refreshTrigger]);
 

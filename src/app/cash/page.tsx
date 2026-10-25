@@ -74,6 +74,7 @@ export default function AvailableCashPage() {
 
   // Forecast points for the selected period
   const forecast = useMemo(() => {
+    void records;
     return getLiveForecast(period, minimumReserve);
   }, [period, minimumReserve, records]);
 

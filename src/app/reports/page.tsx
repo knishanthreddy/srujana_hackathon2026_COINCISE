@@ -92,11 +92,11 @@ export default function ReportsPage() {
   };
 
   // 1. Raw Data Extraction
-  const records = useMemo(() => getFinancialRecords(), [refreshTrigger]);
-  const receivables = useMemo(() => getReceivables(), [refreshTrigger]);
-  const payables = useMemo(() => getPayables(), [refreshTrigger]);
-  const disputes = useMemo(() => getDisputes(), [refreshTrigger]);
-  const forecast = useMemo(() => getLiveForecast(30, 250000), [refreshTrigger]);
+  const records = useMemo(() => { void refreshTrigger; return getFinancialRecords(); }, [refreshTrigger]);
+  const receivables = useMemo(() => { void refreshTrigger; return getReceivables(); }, [refreshTrigger]);
+  const payables = useMemo(() => { void refreshTrigger; return getPayables(); }, [refreshTrigger]);
+  const disputes = useMemo(() => { void refreshTrigger; return getDisputes(); }, [refreshTrigger]);
+  const forecast = useMemo(() => { void refreshTrigger; return getLiveForecast(30, 250000); }, [refreshTrigger]);
   const alerts = useMemo(
     () => generateSmartAlerts(records, receivables, payables, forecast),
     [records, receivables, payables, forecast]
