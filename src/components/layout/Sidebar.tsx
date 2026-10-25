@@ -25,6 +25,7 @@ import {
   X,
   User,
   Clock,
+  FileSpreadsheet,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { DEMO_SUMMARY } from "@/lib/demo-data";
@@ -82,6 +83,7 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Govt Schemes & Subsidies", href: "/schemes", icon: Landmark, badge: "Subsidies", badgeVariant: "success" },
       { name: "Credro™ Trust Score", href: "/credro", icon: ShieldCheck, badge: "82", badgeVariant: "primary" },
+      { name: "Financial Statements", href: "/statements", icon: FileSpreadsheet, badge: "P&L/BS", badgeVariant: "primary" },
       { name: "Reports & Analytics", href: "/reports", icon: BarChart3 },
     ],
   },

@@ -88,6 +88,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "Reports & Analytics",
     subtitle: "Detailed financial reports, cash flow comparisons & CSV data exports",
   },
+  "/statements": {
+    title: "Financial Statements",
+    subtitle: "Generate and download formal Profit & Loss, Cash Flow, and Balance Sheet statements",
+  },
   "/settings": {
     title: "Business Settings",
     subtitle: "Configure business profile, reserve safety levels & forecast assumptions",
