@@ -26,6 +26,11 @@ import {
   Layers,
   Search,
   Check,
+  Coins,
+  Scale,
+  Calendar,
+  DollarSign,
+  PieChart,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -46,16 +51,20 @@ import {
   FixedAssetItem,
   SupplierAdvanceItem,
   LiabilityItem,
+  ForecastAssumptions,
 } from "@/lib/onboarding-types";
 import {
   getOnboardingData,
   saveOnboardingProgress,
   completeOnboarding,
-  calculateTotalLiquidCash,
-  calculateWorkingCapitalAssets,
-  calculateTotalLiabilities,
   DEFAULT_ONBOARDING_DATA,
 } from "@/lib/onboarding-service";
+import {
+  calculateFinancialSummary,
+  validateFinancialInputs,
+  FinancialSummaryResult,
+  FinancialValidationError,
+} from "@/lib/financial-summary";
 import {
   validateCINFormat,
   searchMCACompany,
@@ -67,8 +76,8 @@ const STEPS = [
   { step: 1, title: "Business Profile", desc: "Legal entity & trade details" },
   { step: 2, title: "Company Verification", desc: "MCA validation & CIN status" },
   { step: 3, title: "Opening Finances", desc: "Liquid cash, receivables & assets" },
-  { step: 4, title: "Forecast Preferences", desc: "Runway horizon & reserve floor" },
-  { step: 5, title: "Review & Activate", desc: "Confirm initial setup" },
+  { step: 4, title: "Forecast Assumptions", desc: "Runway, payroll & recurring schedules" },
+  { step: 5, title: "Review & Activate", desc: "Financial summary & activation" },
 ];
 
 export default function OnboardingPage() {
@@ -133,19 +142,26 @@ export default function OnboardingPage() {
     currentEstimatedValue: 0,
   });
 
-  const [isAdvanceModalOpen, setIsAdvanceModalOpen] = useState(false);
-  const [newAdvance, setNewAdvance] = useState<Partial<SupplierAdvanceItem>>({
-    supplierName: "",
-    advanceAmount: 0,
-    purpose: "",
-  });
-
   const [isLiabilityModalOpen, setIsLiabilityModalOpen] = useState(false);
   const [newLiability, setNewLiability] = useState<Partial<LiabilityItem>>({
     liabilityType: "loan",
     name: "",
     amount: 0,
     dueDate: "",
+  });
+
+  // Modal for Step 4 (Recurring Expenses)
+  const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
+  const [newRecurring, setNewRecurring] = useState<{
+    description: string;
+    amount: number;
+    frequency: "monthly" | "weekly";
+    dayOfMonth?: number;
+  }>({
+    description: "",
+    amount: 0,
+    frequency: "monthly",
+    dayOfMonth: 1,
   });
 
   // Load saved progress on mount
@@ -158,24 +174,20 @@ export default function OnboardingPage() {
 
   const currentStep = data.currentStep;
 
-  // Calculated subtotals for live UI display
-  const totalLiquidCash = useMemo(() => {
-    return calculateTotalLiquidCash(data.openingFinances);
+  // Reusable Business-Logic Layer Calculations
+  const summary: FinancialSummaryResult = useMemo(() => {
+    return calculateFinancialSummary(data.openingFinances);
   }, [data.openingFinances]);
 
-  const totalWorkingCapital = useMemo(() => {
-    return calculateWorkingCapitalAssets(data.openingFinances);
-  }, [data.openingFinances]);
-
-  const totalLiabilities = useMemo(() => {
-    return calculateTotalLiabilities(data.openingFinances);
+  const validation = useMemo(() => {
+    return validateFinancialInputs(data.openingFinances);
   }, [data.openingFinances]);
 
   // Save progress helper
   const handleSaveProgress = (showToast = true) => {
     saveOnboardingProgress(data);
     if (showToast) {
-      setSaveToast("Progress saved. You can safely exit and return anytime.");
+      setSaveToast("Progress saved. You can safely return anytime.");
       setTimeout(() => setSaveToast(null), 3500);
     }
   };
@@ -427,13 +439,19 @@ export default function OnboardingPage() {
 
   // Final Activation
   const handleCompleteActivation = async () => {
+    if (!validation.isValid) {
+      setSaveToast("Please resolve financial validation errors before activating.");
+      setTimeout(() => setSaveToast(null), 4000);
+      return;
+    }
+
     setIsActivating(true);
     try {
       const res = await completeOnboarding(data);
-      setSaveToast(`Setup completed successfully! Opening liquid cash: ${formatCurrency(res.liquidCash)}`);
+      setSaveToast(`Setup completed! Available operating cash: ${formatCurrency(res.liquidCash)}`);
       setTimeout(() => {
         router.push("/");
-      }, 1200);
+      }, 1000);
     } catch {
       setIsActivating(false);
     }
@@ -441,9 +459,9 @@ export default function OnboardingPage() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="flex items-center gap-3 text-slate-600 text-sm font-medium">
-          <Sparkles className="w-5 h-5 text-blue-600 animate-spin" />
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
+        <div className="flex items-center gap-3 text-slate-700 text-sm font-medium">
+          <Sparkles className="w-5 h-5 text-teal-600 animate-spin" />
           <span>Loading Business Setup Wizard...</span>
         </div>
       </div>
@@ -451,21 +469,21 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-[#fcfcf9] text-slate-900 flex flex-col font-sans">
       {/* Top Banner Navigation */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-4 lg:px-8 py-3.5 flex items-center justify-between shadow-sm">
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-200/90 px-4 lg:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center shadow-md shadow-blue-500/20 text-white font-bold">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-700 to-teal-500 flex items-center justify-center shadow-md shadow-teal-700/20 text-white font-bold">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-slate-900 tracking-tight text-base">COINCISE</span>
-              <Badge variant="info" size="sm">
-                Business Setup Wizard
-              </Badge>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200">
+                Financial Setup Wizard
+              </span>
             </div>
-            <p className="text-xs text-slate-500">Configure legal entity, opening liquidity & predictive rules</p>
+            <p className="text-xs text-slate-500">Legal entity registration, liquid cash segregation & predictive forecasting</p>
           </div>
         </div>
 
@@ -475,7 +493,7 @@ export default function OnboardingPage() {
             variant="outline"
             size="sm"
             onClick={() => handleSaveProgress(true)}
-            className="text-slate-700 hover:text-slate-900"
+            className="text-slate-700 hover:text-slate-900 border-stone-300"
           >
             <Save className="w-4 h-4 mr-1.5" />
             Save & Continue Later
@@ -492,7 +510,7 @@ export default function OnboardingPage() {
       {/* Floating Save Toast */}
       {saveToast && (
         <div className="fixed bottom-6 right-6 z-50 p-4 rounded-xl bg-slate-900 text-white border border-slate-700 shadow-xl flex items-center gap-2.5 text-xs font-semibold animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
           <span>{saveToast}</span>
         </div>
       )}
@@ -500,24 +518,24 @@ export default function OnboardingPage() {
       {/* Main Wizard Container */}
       <main className="flex-1 max-w-5xl mx-auto w-full p-4 lg:p-8 space-y-6">
         {/* Horizontal Stepper Progress */}
-        <div className="bg-white rounded-2xl p-4 lg:p-6 border border-slate-200/90 shadow-sm">
+        <div className="bg-white rounded-2xl p-4 lg:p-6 border border-stone-200/90 shadow-xs">
           <div className="flex items-center justify-between mb-3 text-xs font-bold text-slate-600">
             <span>
               STEP {currentStep} OF {STEPS.length}: {STEPS[currentStep - 1].title.toUpperCase()}
             </span>
-            <span className="text-blue-600 font-mono">{Math.round((currentStep / STEPS.length) * 100)}% Complete</span>
+            <span className="text-teal-700 font-mono">{Math.round((currentStep / STEPS.length) * 100)}% Complete</span>
           </div>
 
           {/* Progress Bar Line */}
-          <div className="w-full bg-slate-100 rounded-full h-2 mb-6 overflow-hidden">
+          <div className="w-full bg-stone-100 rounded-full h-2 mb-6 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-teal-600 to-teal-800 h-2 rounded-full transition-all duration-300"
               style={{ width: `${(currentStep / STEPS.length) * 100}%` }}
             />
           </div>
 
           {/* Step Badges */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 lg:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 lg:gap-3">
             {STEPS.map((s) => {
               const isActive = s.step === currentStep;
               const isPast = s.step < currentStep;
@@ -528,20 +546,20 @@ export default function OnboardingPage() {
                   onClick={() => handleJumpToStep(s.step)}
                   className={`text-left p-2.5 rounded-xl border transition-all text-xs flex flex-col justify-between ${
                     isActive
-                      ? "border-blue-600 bg-blue-50/50 shadow-sm ring-1 ring-blue-500/30"
+                      ? "border-teal-700 bg-teal-50/70 shadow-xs ring-1 ring-teal-600/30"
                       : isPast
-                      ? "border-emerald-200 bg-emerald-50/40 hover:bg-emerald-50 text-slate-700"
-                      : "border-slate-200/80 hover:bg-slate-50 text-slate-400"
+                      ? "border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 text-slate-700"
+                      : "border-stone-200 hover:bg-stone-50 text-slate-400"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span
                       className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                         isActive
-                          ? "bg-blue-600 text-white"
+                          ? "bg-teal-700 text-white"
                           : isPast
                           ? "bg-emerald-600 text-white"
-                          : "bg-slate-200 text-slate-600"
+                          : "bg-stone-200 text-slate-600"
                       }`}
                     >
                       {isPast ? <Check className="w-3 h-3" /> : s.step}
@@ -563,7 +581,7 @@ export default function OnboardingPage() {
           <Card className="animate-in fade-in duration-200">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-blue-600" />
+                <Building2 className="w-5 h-5 text-teal-700" />
                 <CardTitle>Business Entity Profile</CardTitle>
               </div>
               <CardDescription>
@@ -588,7 +606,7 @@ export default function OnboardingPage() {
                       }))
                     }
                     placeholder="e.g. Apex Engineering & Automation Private Limited"
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                   />
                   <span className="text-[10px] text-slate-500 mt-1 block">
                     Full entity name as registered with the Registrar of Companies (RoC).
@@ -610,7 +628,7 @@ export default function OnboardingPage() {
                       }))
                     }
                     placeholder="e.g. Apex Precision Works"
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                   />
                   <span className="text-[10px] text-slate-500 mt-1 block">
                     Displayed across executive dashboards and customer invoices.
@@ -629,7 +647,7 @@ export default function OnboardingPage() {
                         profile: { ...prev.profile, entityType: e.target.value as BusinessEntityType },
                       }))
                     }
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                   >
                     <option value="pvt_ltd">Private Limited Company (Pvt Ltd)</option>
                     <option value="public_ltd">Public Limited Company (Public Ltd)</option>
@@ -654,7 +672,7 @@ export default function OnboardingPage() {
                         profile: { ...prev.profile, incorporationDate: e.target.value },
                       }))
                     }
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                   />
                 </div>
 
@@ -673,7 +691,7 @@ export default function OnboardingPage() {
                       }))
                     }
                     placeholder="Plot No. / Industrial Area / Street / Ward"
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                   />
                 </div>
 
@@ -692,7 +710,7 @@ export default function OnboardingPage() {
                           },
                         }))
                       }
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-stone-300 text-teal-600 focus:ring-teal-500"
                     />
                     <span>Operating address is the same as registered office</span>
                   </label>
@@ -701,7 +719,7 @@ export default function OnboardingPage() {
                 {!data.profile.sameAsRegistered && (
                   <div className="md:col-span-2">
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Operating / Plant Address
+                      Operating / Plant Premises Address
                     </label>
                     <input
                       type="text"
@@ -713,7 +731,7 @@ export default function OnboardingPage() {
                         }))
                       }
                       placeholder="Factory or workshop premises"
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                     />
                   </div>
                 )}
@@ -731,7 +749,7 @@ export default function OnboardingPage() {
                       }))
                     }
                     placeholder="e.g. Bangalore"
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                   />
                 </div>
 
@@ -748,7 +766,7 @@ export default function OnboardingPage() {
                       }))
                     }
                     placeholder="e.g. Karnataka"
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                   />
                 </div>
 
@@ -764,7 +782,7 @@ export default function OnboardingPage() {
                         profile: { ...prev.profile, industry: e.target.value },
                       }))
                     }
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                   >
                     <option value="Precision Manufacturing & Automation">Precision Manufacturing & Automation</option>
                     <option value="Automotive Components & Tooling">Automotive Components & Tooling</option>
@@ -791,7 +809,7 @@ export default function OnboardingPage() {
                         profile: { ...prev.profile, financialYear: e.target.value },
                       }))
                     }
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                   >
                     <option value="2026-2027 (Apr - Mar)">2026-2027 (1st April - 31st March, Indian Standard)</option>
                     <option value="2026 (Jan - Dec)">2026 (1st January - 31st December, Calendar Year)</option>
@@ -800,7 +818,7 @@ export default function OnboardingPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    GSTIN (Goods and Services Tax ID)
+                    GSTIN (Tax ID)
                   </label>
                   <input
                     type="text"
@@ -812,7 +830,7 @@ export default function OnboardingPage() {
                       }))
                     }
                     placeholder="e.g. 29AABCA1234F1Z5"
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono bg-white"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono bg-white"
                   />
                 </div>
 
@@ -830,10 +848,10 @@ export default function OnboardingPage() {
                       }))
                     }
                     placeholder="e.g. UDYAM-KR-03-0014882"
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono bg-white"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono bg-white"
                   />
                   <span className="text-[10px] text-slate-500 mt-1 block">
-                    Enables MSME statutory payment protections (45-day rule).
+                    Enables statutory MSME payment protection tracking (45-day rule).
                   </span>
                 </div>
               </div>
@@ -848,7 +866,7 @@ export default function OnboardingPage() {
           <Card className="animate-in fade-in duration-200">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                <ShieldCheck className="w-5 h-5 text-teal-700" />
                 <CardTitle>Company Verification & MCA Validation</CardTitle>
               </div>
               <CardDescription>
@@ -857,7 +875,6 @@ export default function OnboardingPage() {
             </CardHeader>
 
             <CardContent className="space-y-6 pt-0">
-              {/* Notice regarding corporate vs non-corporate entities */}
               {["sole_proprietorship", "partnership"].includes(data.profile.entityType) ? (
                 <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
@@ -867,8 +884,8 @@ export default function OnboardingPage() {
                   </div>
                 </div>
               ) : (
-                <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-800 flex items-start gap-3">
-                  <Building2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-xs text-teal-900 flex items-start gap-3">
+                  <Building2 className="w-5 h-5 text-teal-700 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold">Corporate Entity Requirement:</span> As an incorporated entity (
                     <strong>{data.profile.entityType.toUpperCase()}</strong>), you possess a 21-character Corporate Identity Number (CIN). COINCISE validates syntactic structure and cross-checks known registry records.
@@ -877,7 +894,7 @@ export default function OnboardingPage() {
               )}
 
               {/* CIN Search & Validation Form */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-4">
+              <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-4">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
                   <div className="flex-1">
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -892,7 +909,7 @@ export default function OnboardingPage() {
                         setMcaMessage(null);
                       }}
                       placeholder="e.g. U72900KA2021PTC148892 or Apex Engineering"
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono uppercase bg-white"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono uppercase bg-white"
                     />
                   </div>
 
@@ -902,7 +919,7 @@ export default function OnboardingPage() {
                     size="sm"
                     onClick={handleMCASearch}
                     disabled={mcaStatus === "searching"}
-                    className="shrink-0"
+                    className="shrink-0 bg-teal-700 hover:bg-teal-800"
                   >
                     <Search className="w-4 h-4 mr-1.5" />
                     {mcaStatus === "searching" ? "Searching MCA..." : "Search MCA Records"}
@@ -934,14 +951,14 @@ export default function OnboardingPage() {
                       mcaStatus === "verified"
                         ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
                         : mcaStatus === "validated"
-                        ? "bg-blue-50 border border-blue-200 text-blue-800"
-                        : "bg-slate-100 border border-slate-300 text-slate-700"
+                        ? "bg-teal-50 border border-teal-200 text-teal-800"
+                        : "bg-stone-100 border border-stone-300 text-slate-700"
                     }`}
                   >
                     {mcaStatus === "verified" ? (
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                     ) : (
-                      <AlertCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                      <AlertCircle className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
                     )}
                     <div>{mcaMessage}</div>
                   </div>
@@ -950,11 +967,11 @@ export default function OnboardingPage() {
 
               {/* Retrieved MCA Master Record Card */}
               {data.verification.mcaDetailsRetrieved && (
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-md space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-sm space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-700 pb-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-cyan-400" />
+                        <Building2 className="w-4 h-4 text-teal-400" />
                         <h4 className="text-sm font-bold text-white tracking-tight">
                           {data.verification.mcaDetailsRetrieved.companyName}
                         </h4>
@@ -990,15 +1007,15 @@ export default function OnboardingPage() {
                     </div>
                   </div>
 
-                  <div className="pt-2 text-[11px] text-slate-300 border-t border-slate-700/80">
+                  <div className="pt-2 text-[11px] text-slate-300 border-t border-slate-700">
                     <span className="text-slate-400">Registered Office: </span>
                     {data.verification.mcaDetailsRetrieved.registeredAddress}
                   </div>
                 </div>
               )}
 
-              {/* Official MCA Portal Link & Government CAPTCHA Disclaimer */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-600">
+              {/* Official MCA Portal Link */}
+              <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-600">
                 <div className="space-y-0.5">
                   <span className="font-bold text-slate-800">Official Ministry of Corporate Affairs Portal</span>
                   <p className="text-[11px] text-slate-500">
@@ -1009,7 +1026,7 @@ export default function OnboardingPage() {
                   href={MCA_MASTER_DATA_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-semibold text-xs shrink-0"
+                  className="inline-flex items-center gap-1.5 text-teal-700 hover:text-teal-900 font-semibold text-xs shrink-0"
                 >
                   <span>Open MCA.gov.in</span>
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -1017,7 +1034,7 @@ export default function OnboardingPage() {
               </div>
 
               {/* User Confirmation Checkbox */}
-              <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/40">
+              <div className="p-4 rounded-xl border border-teal-200 bg-teal-50/40">
                 <label className="flex items-start gap-2.5 cursor-pointer text-xs font-semibold text-slate-800">
                   <input
                     type="checkbox"
@@ -1028,12 +1045,12 @@ export default function OnboardingPage() {
                         verification: { ...prev.verification, userConfirmed: e.target.checked },
                       }))
                     }
-                    className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="mt-0.5 rounded border-stone-300 text-teal-700 focus:ring-teal-500"
                   />
                   <div>
                     <span>I confirm that the business identity, CIN, and corporate registration details provided above are true, accurate, and represent our operational enterprise.</span>
                     <span className="text-[10px] text-slate-500 font-normal block mt-0.5">
-                      COINCISE uses these parameters for generating compliant balance sheets, dispute filings under FairResolve, and MSME statutory payment timelines.
+                      COINCISE uses these parameters for generating financial estimates, dispute filings under FairResolve, and MSME statutory payment tracking.
                     </span>
                   </div>
                 </label>
@@ -1048,50 +1065,50 @@ export default function OnboardingPage() {
         {currentStep === 3 && (
           <div className="space-y-6 animate-in fade-in duration-200">
             {/* STRICT ACCOUNTING PRINCIPLE CALLOUT */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-900 to-teal-950 text-white border border-emerald-700/60 shadow-sm flex items-start gap-3">
-              <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-teal-950 via-teal-900 to-slate-900 text-white border border-teal-700/60 shadow-xs flex items-start gap-3">
+              <ShieldCheck className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
               <div className="text-xs space-y-1">
-                <span className="font-extrabold text-emerald-200 text-sm">
+                <span className="font-extrabold text-teal-200 text-sm">
                   Accounting Integrity & Liquidity Isolation Principle
                 </span>
-                <p className="text-emerald-100/90 leading-relaxed">
-                  In accordance with conservative cash-flow accounting, <strong>Customer Receivables</strong>, <strong>Inventory Stock</strong>, <strong>Supplier Advances</strong>, and <strong>Fixed Machinery</strong> are classified as Working Capital and Capital Assets. They are <strong>NEVER</strong> counted as liquid cash available for paying immediate bills until payments physically settle in your bank accounts.
+                <p className="text-teal-100/90 leading-relaxed">
+                  In accordance with conservative cash-flow accounting, <strong>Customer Receivables</strong>, <strong>Inventory Stock</strong>, <strong>Supplier Advances</strong>, and <strong>Fixed Machinery</strong> are classified as Working Capital and Capital Assets. They are <strong>NEVER</strong> counted as immediately spendable cash until payments physically settle in your bank accounts.
                 </p>
               </div>
             </div>
 
-            {/* Quick Live Summary Ribbon */}
+            {/* Live 3-Pillar Ribbon */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950">
-                <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide">
-                  Available Liquid Cash
+              <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-950">
+                <div className="text-[11px] font-bold text-teal-700 uppercase tracking-wide">
+                  Available Operating Cash
                 </div>
-                <div className="text-xl font-extrabold text-emerald-900 mt-0.5">
-                  {formatCurrency(totalLiquidCash)}
+                <div className="text-xl font-extrabold text-teal-900 mt-0.5">
+                  {formatCurrency(summary.availableOperatingCash)}
                 </div>
-                <div className="text-[10px] text-emerald-600 mt-1">
+                <div className="text-[10px] text-teal-600 mt-1">
                   Cash in Hand + Unrestricted Bank Balances
                 </div>
               </div>
 
               <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-950">
                 <div className="text-[11px] font-bold text-blue-700 uppercase tracking-wide">
-                  Working Capital & Receivables
+                  Total Recorded Assets
                 </div>
                 <div className="text-xl font-extrabold text-blue-900 mt-0.5">
-                  {formatCurrency(totalWorkingCapital)}
+                  {formatCurrency(summary.totalRecordedAssets)}
                 </div>
                 <div className="text-[10px] text-blue-600 mt-1">
-                  Invoices to collect, inventory & advances
+                  Liquid resources, receivables, inventory & equipment
                 </div>
               </div>
 
               <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-950">
                 <div className="text-[11px] font-bold text-rose-700 uppercase tracking-wide">
-                  Total Opening Liabilities
+                  Total Recorded Liabilities
                 </div>
                 <div className="text-xl font-extrabold text-rose-900 mt-0.5">
-                  {formatCurrency(totalLiabilities)}
+                  {formatCurrency(summary.totalRecordedLiabilities)}
                 </div>
                 <div className="text-[10px] text-rose-600 mt-1">
                   Supplier bills, loans, taxes & pending payroll
@@ -1104,11 +1121,11 @@ export default function OnboardingPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Wallet className="w-5 h-5 text-emerald-600" />
+                    <Wallet className="w-5 h-5 text-teal-700" />
                     <div>
                       <CardTitle>1. Liquid Cash & Bank Balances</CardTitle>
                       <CardDescription>
-                        Physical cash and immediately accessible bank deposits.
+                        Physical cash, immediately accessible bank deposits, and short-term liquid funds.
                       </CardDescription>
                     </div>
                   </div>
@@ -1127,10 +1144,10 @@ export default function OnboardingPage() {
 
               <CardContent className="space-y-4 pt-0">
                 {/* Cash in Hand input */}
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-800">
-                      Physical Cash in Hand (₹ INR)
+                      Physical Cash in Hand (₹ INR) *
                     </label>
                     <span className="text-[10px] text-slate-500">
                       Petty cash stored in office register or workshop vault
@@ -1150,8 +1167,60 @@ export default function OnboardingPage() {
                           },
                         }))
                       }
-                      className="w-full px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                      className="w-full px-3 py-1.5 text-xs font-semibold rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
                     />
+                  </div>
+                </div>
+
+                {/* Short-Term Investments Card */}
+                <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-200 space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-800">
+                        Short-Term Investments (₹ INR)
+                      </label>
+                      <span className="text-[10px] text-slate-500">
+                        Overnight funds, treasury bills, or liquid mutual fund units
+                      </span>
+                    </div>
+                    <div className="w-full sm:w-48">
+                      <input
+                        type="number"
+                        min={0}
+                        value={data.openingFinances.shortTermInvestments || 0}
+                        onChange={(e) =>
+                          setData((prev) => ({
+                            ...prev,
+                            openingFinances: {
+                              ...prev.openingFinances,
+                              shortTermInvestments: Number(e.target.value) || 0,
+                            },
+                          }))
+                        }
+                        className="w-full px-3 py-1.5 text-xs font-semibold rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-stone-200 flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      id="st-immediate-check"
+                      checked={Boolean(data.openingFinances.isShortTermInvestmentImmediatelyAvailable)}
+                      onChange={(e) =>
+                        setData((prev) => ({
+                          ...prev,
+                          openingFinances: {
+                            ...prev.openingFinances,
+                            isShortTermInvestmentImmediatelyAvailable: e.target.checked,
+                          },
+                        }))
+                      }
+                      className="mt-0.5 rounded border-stone-300 text-teal-600 focus:ring-teal-500"
+                    />
+                    <label htmlFor="st-immediate-check" className="text-xs text-slate-700 cursor-pointer">
+                      <span className="font-semibold">Immediate availability established:</span> Included in immediately spendable operating cash (unrestricted, redeemable T+0/T+1). If unchecked, recorded under general liquid resources.
+                    </label>
                   </div>
                 </div>
 
@@ -1165,7 +1234,7 @@ export default function OnboardingPage() {
                   </div>
 
                   {data.openingFinances.bankAccounts.length === 0 ? (
-                    <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-xl text-xs text-slate-500">
+                    <div className="p-6 text-center border-2 border-dashed border-stone-200 rounded-xl text-xs text-slate-500">
                       No bank accounts added yet. Click &quot;Add Bank Account&quot; to configure your primary current account.
                     </div>
                   ) : (
@@ -1173,10 +1242,10 @@ export default function OnboardingPage() {
                       {data.openingFinances.bankAccounts.map((b) => (
                         <div
                           key={b.id}
-                          className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between gap-3 shadow-xs hover:border-slate-300 transition-colors"
+                          className="p-3 bg-white rounded-xl border border-stone-200 flex items-center justify-between gap-3 shadow-xs hover:border-stone-300 transition-colors"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                            <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0">
                               <Landmark className="w-4 h-4" />
                             </div>
                             <div className="min-w-0">
@@ -1191,8 +1260,8 @@ export default function OnboardingPage() {
 
                           <div className="flex items-center gap-4 shrink-0">
                             <div className="text-right">
-                              <div className="text-xs font-bold text-emerald-700">
-                                {formatCurrency(b.availableBalance)}
+                              <div className="text-xs font-bold text-teal-700">
+                                {formatCurrency(b.availableBalance)} available
                               </div>
                               <div className="text-[10px] text-slate-500">
                                 Ledger: {formatCurrency(b.currentBalance)}
@@ -1216,10 +1285,10 @@ export default function OnboardingPage() {
                 </div>
 
                 {/* Zero Credential Security Guarantee */}
-                <div className="p-3 rounded-lg bg-slate-100 border border-slate-200 flex items-center gap-2 text-[11px] text-slate-600">
+                <div className="p-3 rounded-lg bg-stone-100 border border-stone-200 flex items-center gap-2 text-[11px] text-slate-600">
                   <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                   <span>
-                    <strong>Security Notice:</strong> COINCISE never asks for net-banking passwords, UPI PINs, or OTPs. Balances are recorded for internal forecasting only.
+                    <strong>Security Guarantee:</strong> COINCISE never asks for net-banking passwords, UPI PINs, or OTPs. Balances are self-declared for operational forecasting.
                   </span>
                 </div>
               </CardContent>
@@ -1273,15 +1342,15 @@ export default function OnboardingPage() {
                   </div>
 
                   {data.openingFinances.receivables.length === 0 ? (
-                    <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-xl text-xs text-slate-500">
-                      No opening customer receivables. If you have outstanding client invoices, add them here to include them in expected cash collections.
+                    <div className="p-6 text-center border-2 border-dashed border-stone-200 rounded-xl text-xs text-slate-500">
+                      No opening customer receivables. Add client invoices pending collection.
                     </div>
                   ) : (
                     <div className="space-y-2">
                       {data.openingFinances.receivables.map((r) => (
                         <div
                           key={r.id}
-                          className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between gap-3 shadow-xs hover:border-slate-300 transition-colors"
+                          className="p-3 bg-white rounded-xl border border-stone-200 flex items-center justify-between gap-3 shadow-xs hover:border-stone-300 transition-colors"
                         >
                           <div className="min-w-0">
                             <div className="text-xs font-bold text-slate-900 truncate">
@@ -1320,7 +1389,7 @@ export default function OnboardingPage() {
 
                 {/* Inventory & Fixed Assets badges */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-200">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-xs font-bold text-slate-800">
                         Stock & Inventory ({data.openingFinances.inventoryItems.length} items)
@@ -1330,20 +1399,18 @@ export default function OnboardingPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsInventoryModalOpen(true)}
-                        className="text-[11px] text-blue-600 h-6 px-2"
+                        className="text-[11px] text-teal-700 h-6 px-2"
                       >
                         + Add
                       </Button>
                     </div>
                     <div className="text-sm font-extrabold text-slate-900">
-                      {formatCurrency(
-                        data.openingFinances.inventoryItems.reduce((s, i) => s + i.estimatedValue, 0)
-                      )}
+                      {formatCurrency(summary.breakdown.inventoryValuation)}
                     </div>
                     <span className="text-[10px] text-slate-500">Raw materials, tools & finished goods</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-200">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-xs font-bold text-slate-800">
                         Machinery & Fixed Assets ({data.openingFinances.fixedAssets.length} items)
@@ -1353,17 +1420,15 @@ export default function OnboardingPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsAssetModalOpen(true)}
-                        className="text-[11px] text-blue-600 h-6 px-2"
+                        className="text-[11px] text-teal-700 h-6 px-2"
                       >
                         + Add
                       </Button>
                     </div>
                     <div className="text-sm font-extrabold text-slate-900">
-                      {formatCurrency(
-                        data.openingFinances.fixedAssets.reduce((s, a) => s + a.currentEstimatedValue, 0)
-                      )}
+                      {formatCurrency(summary.breakdown.fixedAssetsBookValue)}
                     </div>
-                    <span className="text-[10px] text-slate-500">CNC machines, vehicles, IT infrastructure</span>
+                    <span className="text-[10px] text-slate-500">Machinery, equipment & IT hardware</span>
                   </div>
                 </div>
               </CardContent>
@@ -1417,7 +1482,7 @@ export default function OnboardingPage() {
                   </div>
 
                   {data.openingFinances.payables.length === 0 ? (
-                    <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-xl text-xs text-slate-500">
+                    <div className="p-6 text-center border-2 border-dashed border-stone-200 rounded-xl text-xs text-slate-500">
                       No vendor payables registered. Add supplier invoices that will require cash outflow in upcoming days.
                     </div>
                   ) : (
@@ -1425,7 +1490,7 @@ export default function OnboardingPage() {
                       {data.openingFinances.payables.map((p) => (
                         <div
                           key={p.id}
-                          className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between gap-3 shadow-xs hover:border-slate-300 transition-colors"
+                          className="p-3 bg-white rounded-xl border border-stone-200 flex items-center justify-between gap-3 shadow-xs hover:border-stone-300 transition-colors"
                         >
                           <div className="min-w-0">
                             <div className="text-xs font-bold text-slate-900 truncate">{p.vendorName}</div>
@@ -1462,26 +1527,26 @@ export default function OnboardingPage() {
 
                 {/* Additional Liabilities Breakdown */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-200">
                     <span className="text-xs font-bold text-slate-800 block">Bank Loans & Credit</span>
                     <span className="text-sm font-extrabold text-slate-900 mt-1 block">
-                      {formatCurrency(data.openingFinances.loans.reduce((s, l) => s + l.amount, 0))}
+                      {formatCurrency(summary.breakdown.loans)}
                     </span>
-                    <span className="text-[10px] text-slate-500">SIDBI / MSME term facilities</span>
+                    <span className="text-[10px] text-slate-500">Term loan facilities</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-200">
                     <span className="text-xs font-bold text-slate-800 block">Taxes & GST Payable</span>
                     <span className="text-sm font-extrabold text-slate-900 mt-1 block">
-                      {formatCurrency(data.openingFinances.taxesPayable.reduce((s, t) => s + t.amount, 0))}
+                      {formatCurrency(summary.breakdown.taxesPayable)}
                     </span>
                     <span className="text-[10px] text-slate-500">Monthly GST & TDS returns</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-200">
                     <span className="text-xs font-bold text-slate-800 block">Staff Wages & Payroll</span>
                     <span className="text-sm font-extrabold text-slate-900 mt-1 block">
-                      {formatCurrency(data.openingFinances.payrollObligations.reduce((s, pr) => s + pr.amount, 0))}
+                      {formatCurrency(summary.breakdown.payrollObligations)}
                     </span>
                     <span className="text-[10px] text-slate-500">Upcoming payroll cycle</span>
                   </div>
@@ -1492,245 +1557,454 @@ export default function OnboardingPage() {
         )}
 
         {/* =========================================================================
-            STEP 4: FORECAST PREFERENCES & RISK BENCHMARKS
+            STEP 4: FORECAST PREFERENCES & ASSUMPTIONS
            ========================================================================= */}
         {currentStep === 4 && (
-          <Card className="animate-in fade-in duration-200">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                <CardTitle>Forecast & Liquidity Risk Preferences</CardTitle>
-              </div>
-              <CardDescription>
-                Define your planning horizon and minimum cash reserve floor for automated predictive risk alerts.
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-6 pt-0">
-              {/* Default Horizon Selector */}
-              <div>
-                <label className="block text-xs font-bold text-slate-800 mb-2">
-                  Default Forecast Planning Horizon *
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { days: 7, label: "7 Days", desc: "Weekly tactical liquidity" },
-                    { days: 30, label: "30 Days (Recommended)", desc: "Monthly operational runway" },
-                    { days: 60, label: "60 Days", desc: "Bi-monthly supplier cycle" },
-                    { days: 90, label: "90 Days", desc: "Quarterly strategic view" },
-                  ].map((h) => {
-                    const isSelected = data.preferences.defaultForecastHorizon === h.days;
-                    return (
-                      <button
-                        key={h.days}
-                        type="button"
-                        onClick={() =>
-                          setData((prev) => ({
-                            ...prev,
-                            preferences: {
-                              ...prev.preferences,
-                              defaultForecastHorizon: h.days as 7 | 30 | 60 | 90,
-                            },
-                          }))
-                        }
-                        className={`p-3.5 rounded-xl border text-left transition-all ${
-                          isSelected
-                            ? "border-blue-600 bg-blue-50/60 ring-2 ring-blue-500/20 text-blue-900 shadow-sm"
-                            : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
-                        }`}
-                      >
-                        <div className="font-bold text-xs">{h.label}</div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">{h.desc}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Minimum Cash Reserve Floor */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-800">
-                      Minimum Cash Reserve Safety Floor (₹ INR) *
-                    </label>
-                    <p className="text-[11px] text-slate-500">
-                      When projected closing cash drops below this threshold, COINCISE triggers automated alerts.
-                    </p>
-                  </div>
-
-                  <div className="w-full sm:w-56">
-                    <input
-                      type="number"
-                      step={10000}
-                      min={0}
-                      value={data.openingFinances.minimumReserve}
-                      onChange={(e) =>
-                        setData((prev) => ({
-                          ...prev,
-                          openingFinances: {
-                            ...prev.openingFinances,
-                            minimumReserve: Number(e.target.value) || 0,
-                          },
-                          preferences: {
-                            ...prev.preferences,
-                            safetyReserveBuffer: Number(e.target.value) || 0,
-                          },
-                        }))
-                      }
-                      className="w-full px-3 py-2 text-xs font-bold rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                    />
-                  </div>
-                </div>
-
-                <div className="text-[11px] text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>
-                    Current Setting: <strong>{formatCurrency(data.openingFinances.minimumReserve)}</strong>. Recommended for small manufacturing: ₹2,50,000 (roughly 1 month of utility & statutory expenses).
-                  </span>
-                </div>
-              </div>
-
-              {/* Overdue Alert Threshold */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-800">
-                    Overdue Receivables Follow-Up Trigger (Days) *
-                  </label>
-                  <p className="text-[11px] text-slate-500">
-                    Number of days past invoice due date before marking as high-risk in Decision Centre.
-                  </p>
-                </div>
-
-                <div className="w-full sm:w-36">
-                  <select
-                    value={data.preferences.overdueAlertDays}
-                    onChange={(e) =>
-                      setData((prev) => ({
-                        ...prev,
-                        preferences: {
-                          ...prev.preferences,
-                          overdueAlertDays: Number(e.target.value) || 14,
-                        },
-                      }))
-                    }
-                    className="w-full px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  >
-                    <option value={7}>7 Days past due</option>
-                    <option value={14}>14 Days (Standard)</option>
-                    <option value={21}>21 Days</option>
-                    <option value={30}>30 Days</option>
-                  </select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* =========================================================================
-            STEP 5: REVIEW, CONFIRM & ACTIVATE
-           ========================================================================= */}
-        {currentStep === 5 && (
           <div className="space-y-6 animate-in fade-in duration-200">
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-indigo-600" />
-                  <CardTitle>Review & Confirm Setup</CardTitle>
+                  <TrendingUp className="w-5 h-5 text-teal-700" />
+                  <CardTitle>Forecast Planning Horizon & Safety Reserve</CardTitle>
                 </div>
                 <CardDescription>
-                  Review your configured business profile, liquid cash balances, and risk parameters before opening the dashboard.
+                  Define your planning runway horizon and minimum cash reserve floor for automated predictive risk alerts.
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="space-y-6 pt-0">
-                {/* 4 Key Summary Blocks */}
+                {/* Default Horizon Selector */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-2">
+                    Default Forecast Planning Horizon *
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { days: 7, label: "7 Days", desc: "Weekly tactical liquidity" },
+                      { days: 30, label: "30 Days (Recommended)", desc: "Monthly operational runway" },
+                      { days: 60, label: "60 Days", desc: "Bi-monthly supplier cycle" },
+                      { days: 90, label: "90 Days", desc: "Quarterly strategic view" },
+                    ].map((h) => {
+                      const isSelected = data.preferences.defaultForecastHorizon === h.days;
+                      return (
+                        <button
+                          key={h.days}
+                          type="button"
+                          onClick={() =>
+                            setData((prev) => ({
+                              ...prev,
+                              preferences: {
+                                ...prev.preferences,
+                                defaultForecastHorizon: h.days as 7 | 30 | 60 | 90,
+                              },
+                            }))
+                          }
+                          className={`p-3.5 rounded-xl border text-left transition-all ${
+                            isSelected
+                              ? "border-teal-700 bg-teal-50/60 ring-2 ring-teal-600/20 text-teal-950 shadow-xs"
+                              : "border-stone-200 bg-white hover:bg-stone-50 text-slate-700"
+                          }`}
+                        >
+                          <div className="font-bold text-xs">{h.label}</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">{h.desc}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Minimum Cash Reserve Floor */}
+                <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-800">
+                        Minimum Cash Reserve Safety Floor (₹ INR) *
+                      </label>
+                      <p className="text-[11px] text-slate-500">
+                        When projected closing cash drops below this threshold, COINCISE triggers automated alerts.
+                      </p>
+                    </div>
+
+                    <div className="w-full sm:w-56">
+                      <input
+                        type="number"
+                        step={10000}
+                        min={0}
+                        value={data.openingFinances.minimumReserve}
+                        onChange={(e) =>
+                          setData((prev) => ({
+                            ...prev,
+                            openingFinances: {
+                              ...prev.openingFinances,
+                              minimumReserve: Number(e.target.value) || 0,
+                            },
+                            preferences: {
+                              ...prev.preferences,
+                              safetyReserveBuffer: Number(e.target.value) || 0,
+                            },
+                          }))
+                        }
+                        className="w-full px-3 py-2 text-xs font-bold rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] text-slate-600 bg-white p-2.5 rounded-lg border border-stone-200 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      Current Setting: <strong>{formatCurrency(data.openingFinances.minimumReserve)}</strong>. Recommended: roughly 1 month of utility & statutory expenses.
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Optional Forecast Assumptions Card */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-teal-700" />
+                  <CardTitle>Forecast Assumptions & Operational Schedules (Optional)</CardTitle>
+                </div>
+                <CardDescription>
+                  Configure baseline monthly sales, customer delays, payroll dates, and recurring transactions for long-term runway projection.
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="space-y-4 pt-0">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Typical Monthly Sales (₹)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={data.forecastAssumptions?.typicalMonthlySales || 0}
+                      onChange={(e) =>
+                        setData((prev) => ({
+                          ...prev,
+                          forecastAssumptions: {
+                            ...prev.forecastAssumptions,
+                            typicalMonthlySales: Number(e.target.value) || 0,
+                          },
+                        }))
+                      }
+                      placeholder="e.g. 600000"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">Baseline revenue assumption</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Typical Monthly Expenses (₹)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={data.forecastAssumptions?.typicalMonthlyExpenses || 0}
+                      onChange={(e) =>
+                        setData((prev) => ({
+                          ...prev,
+                          forecastAssumptions: {
+                            ...prev.forecastAssumptions,
+                            typicalMonthlyExpenses: Number(e.target.value) || 0,
+                          },
+                        }))
+                      }
+                      placeholder="e.g. 400000"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">Baseline operating burn</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Expected Monthly Growth (%)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={data.forecastAssumptions?.expectedGrowthRate || 0}
+                      onChange={(e) =>
+                        setData((prev) => ({
+                          ...prev,
+                          forecastAssumptions: {
+                            ...prev.forecastAssumptions,
+                            expectedGrowthRate: Number(e.target.value) || 0,
+                          },
+                        }))
+                      }
+                      placeholder="e.g. 5"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">Projected revenue expansion</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Typical Customer Delay (Days)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={data.forecastAssumptions?.typicalCustomerPaymentDelay || 0}
+                      onChange={(e) =>
+                        setData((prev) => ({
+                          ...prev,
+                          forecastAssumptions: {
+                            ...prev.forecastAssumptions,
+                            typicalCustomerPaymentDelay: Number(e.target.value) || 0,
+                          },
+                        }))
+                      }
+                      placeholder="e.g. 7"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">Assumed delay beyond due date</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Supplier Payment Terms (Days)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={data.forecastAssumptions?.supplierPaymentTerms || 30}
+                      onChange={(e) =>
+                        setData((prev) => ({
+                          ...prev,
+                          forecastAssumptions: {
+                            ...prev.forecastAssumptions,
+                            supplierPaymentTerms: Number(e.target.value) || 30,
+                          },
+                        }))
+                      }
+                      placeholder="e.g. 30"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">Standard credit days</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Monthly Payroll Schedule Day
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={28}
+                      value={data.forecastAssumptions?.payrollScheduleDay || 5}
+                      onChange={(e) =>
+                        setData((prev) => ({
+                          ...prev,
+                          forecastAssumptions: {
+                            ...prev.forecastAssumptions,
+                            payrollScheduleDay: Number(e.target.value) || 5,
+                          },
+                        }))
+                      }
+                      placeholder="e.g. 5"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">Day of month staff salaries clear</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* =========================================================================
+            STEP 5: REVIEW, CONFIRM & ACTIVATE (7 CORE METRICS & VALIDATION)
+           ========================================================================= */}
+        {currentStep === 5 && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* ESTIMATE DISCLAIMER LABEL */}
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-3 shadow-xs">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="text-xs space-y-1">
+                <span className="font-extrabold uppercase tracking-wide text-[11px] text-amber-800">
+                  Management Financial Estimate Notice
+                </span>
+                <p className="text-amber-900 leading-relaxed">
+                  {summary.legalDisclaimer}
+                </p>
+              </div>
+            </div>
+
+            {/* VALIDATION ERRORS BANNER (If Any) */}
+            {!validation.isValid && (
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 text-rose-950 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-xs text-rose-800">
+                  <AlertTriangle className="w-4 h-4 text-rose-600" />
+                  <span>Validation Inconsistencies Detected ({validation.errors.length}):</span>
+                </div>
+                <ul className="list-disc list-inside text-xs space-y-1 text-rose-900">
+                  {validation.errors.map((err, i) => (
+                    <li key={i}>{err.message}</li>
+                  ))}
+                </ul>
+                <div className="pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleJumpToStep(3)}
+                    className="text-xs text-rose-700 border-rose-300 hover:bg-rose-100"
+                  >
+                    Go Back to Opening Finances & Fix &rarr;
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* 7 CORE FINANCIAL SUMMARY CARDS */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Scale className="w-5 h-5 text-teal-700" />
+                    <div>
+                      <CardTitle>Executive Financial Position</CardTitle>
+                      <CardDescription>
+                        Calculated using decimal-safe arithmetic and conservative working capital principles.
+                      </CardDescription>
+                    </div>
+                  </div>
+
+                  <Badge variant={summary.isReserveSurplus ? "success" : "warning"} size="md">
+                    {summary.isReserveSurplus ? "Reserve Surplus" : "Reserve Shortfall"}
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-6 pt-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {/* Business Identity */}
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-2">
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
-                      Commercial Identity
+                  {/* 1. Total Liquid Resources */}
+                  <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
+                      1. Total Liquid Resources
+                    </span>
+                    <div className="text-xl font-extrabold text-slate-900">
+                      {formatCurrency(summary.totalLiquidResources)}
                     </div>
-                    <div className="font-bold text-sm text-slate-900 truncate">
-                      {data.profile.tradeName || data.profile.mcaLegalName}
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      Entity: <span className="font-semibold">{data.profile.entityType.toUpperCase()}</span>
-                    </div>
-                    <div className="text-[11px] text-slate-500 font-mono truncate">
-                      CIN: {data.profile.cin || "N/A (Non-corporate)"}
-                    </div>
-                    <Badge variant={data.verification.userConfirmed ? "success" : "neutral"} size="sm">
-                      {data.verification.userConfirmed ? "Confirmed by User" : "Pending Confirmation"}
-                    </Badge>
-                  </div>
-
-                  {/* Available Liquid Cash */}
-                  <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2">
-                    <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide">
-                      Starting Liquid Cash
-                    </div>
-                    <div className="font-extrabold text-lg text-emerald-900">
-                      {formatCurrency(totalLiquidCash)}
-                    </div>
-                    <div className="text-xs text-emerald-800">
-                      Cash: {formatCurrency(data.openingFinances.cashInHand)}
-                    </div>
-                    <div className="text-xs text-emerald-800">
-                      Bank: {formatCurrency(totalLiquidCash - data.openingFinances.cashInHand)}
-                    </div>
-                    <span className="text-[10px] text-emerald-600 block">
-                      Synchronizes to dashboard opening cash
+                    <span className="text-[10px] text-slate-500 block leading-tight">
+                      Cash + Gross Bank Balances + Liquid Funds + Short-Term Inv
                     </span>
                   </div>
 
-                  {/* Working Capital Assets */}
-                  <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 space-y-2">
-                    <div className="text-[10px] font-bold text-blue-700 uppercase tracking-wide">
-                      Working Assets
+                  {/* 2. Available Operating Cash */}
+                  <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 space-y-1">
+                    <span className="text-[10px] font-bold text-teal-800 uppercase tracking-wide">
+                      2. Available Operating Cash
+                    </span>
+                    <div className="text-xl font-extrabold text-teal-950">
+                      {formatCurrency(summary.availableOperatingCash)}
                     </div>
-                    <div className="font-extrabold text-lg text-blue-900">
-                      {formatCurrency(totalWorkingCapital)}
-                    </div>
-                    <div className="text-xs text-blue-800">
-                      Receivables: {data.openingFinances.receivables.length} invoices
-                    </div>
-                    <div className="text-xs text-blue-800">
-                      Stock: {data.openingFinances.inventoryItems.length} items
-                    </div>
-                    <span className="text-[10px] text-blue-600 block">
-                      Exempted from liquid cash calculation
+                    <span className="text-[10px] text-teal-700 block leading-tight">
+                      Immediately spendable (Restricted funds excluded)
                     </span>
                   </div>
 
-                  {/* Opening Obligations */}
-                  <div className="p-4 rounded-xl bg-rose-50/70 border border-rose-200 space-y-2">
-                    <div className="text-[10px] font-bold text-rose-700 uppercase tracking-wide">
-                      Opening Liabilities
+                  {/* 3. Minimum Cash Reserve */}
+                  <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
+                      3. Minimum Cash Reserve
+                    </span>
+                    <div className="text-xl font-extrabold text-slate-900">
+                      {formatCurrency(summary.minimumCashReserve)}
                     </div>
-                    <div className="font-extrabold text-lg text-rose-900">
-                      {formatCurrency(totalLiabilities)}
+                    <span className="text-[10px] text-slate-500 block leading-tight">
+                      Safety floor threshold for runway breach alerts
+                    </span>
+                  </div>
+
+                  {/* 4. Reserve Surplus or Shortfall */}
+                  <div
+                    className={`p-4 rounded-xl border space-y-1 ${
+                      summary.isReserveSurplus
+                        ? "bg-emerald-50 border-emerald-200"
+                        : "bg-rose-50 border-rose-200"
+                    }`}
+                  >
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wide ${
+                        summary.isReserveSurplus ? "text-emerald-800" : "text-rose-800"
+                      }`}
+                    >
+                      4. {summary.isReserveSurplus ? "Reserve Surplus" : "Reserve Shortfall"}
+                    </span>
+                    <div
+                      className={`text-xl font-extrabold ${
+                        summary.isReserveSurplus ? "text-emerald-950" : "text-rose-950"
+                      }`}
+                    >
+                      {summary.isReserveSurplus ? "+" : ""}
+                      {formatCurrency(summary.reserveSurplusOrShortfall)}
                     </div>
-                    <div className="text-xs text-rose-800">
-                      Payables: {data.openingFinances.payables.length} bills
+                    <span
+                      className={`text-[10px] block leading-tight ${
+                        summary.isReserveSurplus ? "text-emerald-700" : "text-rose-700"
+                      }`}
+                    >
+                      Available Cash - Minimum Reserve Floor
+                    </span>
+                  </div>
+
+                  {/* 5. Total Recorded Assets */}
+                  <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 space-y-1">
+                    <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wide">
+                      5. Total Recorded Assets
+                    </span>
+                    <div className="text-xl font-extrabold text-blue-950">
+                      {formatCurrency(summary.totalRecordedAssets)}
                     </div>
-                    <div className="text-xs text-rose-800">
-                      Loans: {formatCurrency(data.openingFinances.loans.reduce((s, l) => s + l.amount, 0))}
+                    <span className="text-[10px] text-blue-700 block leading-tight">
+                      Liquid resources + Receivables + Stock + Machinery
+                    </span>
+                  </div>
+
+                  {/* 6. Total Recorded Liabilities */}
+                  <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-1">
+                    <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wide">
+                      6. Total Recorded Liabilities
+                    </span>
+                    <div className="text-xl font-extrabold text-rose-950">
+                      {formatCurrency(summary.totalRecordedLiabilities)}
                     </div>
-                    <span className="text-[10px] text-rose-600 block">
-                      Scheduled for upcoming disbursements
+                    <span className="text-[10px] text-rose-700 block leading-tight">
+                      Vendor payables + Term loans + Taxes + Payroll
+                    </span>
+                  </div>
+
+                  {/* 7. Approximate Net Assets */}
+                  <div className="p-4 rounded-xl bg-stone-900 text-white sm:col-span-2 space-y-1">
+                    <span className="text-[10px] font-bold text-teal-400 uppercase tracking-wide">
+                      7. Approximate Net Assets
+                    </span>
+                    <div className="text-2xl font-extrabold text-white">
+                      {formatCurrency(summary.approximateNetAssets)}
+                    </div>
+                    <span className="text-[10px] text-slate-300 block leading-tight">
+                      Total Recorded Assets ({formatCurrency(summary.totalRecordedAssets)}) - Total Liabilities ({formatCurrency(summary.totalRecordedLiabilities)})
                     </span>
                   </div>
                 </div>
 
-                {/* Audit Confirmation Box */}
-                <div className="p-4 rounded-xl bg-slate-900 text-white space-y-2 text-xs">
-                  <div className="flex items-center gap-2 text-emerald-400 font-bold">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Ready for Activation</span>
+                {/* Audit & Continuity Information */}
+                <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 text-xs text-slate-700 space-y-1.5">
+                  <div className="font-bold text-slate-900 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                    <span>Forecasting Engine Continuity</span>
                   </div>
-                  <p className="text-slate-300 leading-relaxed">
-                    Upon activation, COINCISE will initialize the real-time cash-flow forecasting engine with your <strong>{formatCurrency(totalLiquidCash)}</strong> available liquid cash, register your <strong>{data.openingFinances.receivables.length} customer receivables</strong> in the collection tracker, schedule your <strong>{data.openingFinances.payables.length} vendor payables</strong>, and apply your <strong>{formatCurrency(data.openingFinances.minimumReserve)}</strong> safety floor across all 7, 30, 60, and 90-day scenarios.
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    When confirmed, COINCISE will seed your dashboard opening cash with exactly <strong>{formatCurrency(summary.availableOperatingCash)}</strong>. Daily forecasting will strictly satisfy:
+                    <code className="mx-1 px-1.5 py-0.5 rounded bg-white border border-stone-300 text-slate-800">Closing Cash = Opening Cash + Inflows - Outflows</code>,
+                    with each day&apos;s opening cash equal to the previous day&apos;s closing cash.
                   </p>
                 </div>
               </CardContent>
@@ -1739,7 +2013,7 @@ export default function OnboardingPage() {
         )}
 
         {/* Wizard Footer Navigation Controls */}
-        <div className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-sm flex items-center justify-between gap-3">
+        <div className="p-4 bg-white rounded-2xl border border-stone-200 shadow-xs flex items-center justify-between gap-3">
           <div>
             {currentStep > 1 ? (
               <Button
@@ -1778,6 +2052,7 @@ export default function OnboardingPage() {
                 variant="primary"
                 size="md"
                 onClick={handleNextStep}
+                className="bg-teal-700 hover:bg-teal-800"
               >
                 <span>Continue to {STEPS[currentStep].title}</span>
                 <ChevronRight className="w-4 h-4 ml-1" />
@@ -1788,11 +2063,11 @@ export default function OnboardingPage() {
                 variant="primary"
                 size="md"
                 onClick={handleCompleteActivation}
-                disabled={isActivating}
-                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold shadow-md shadow-emerald-500/20"
+                disabled={isActivating || !validation.isValid}
+                className="bg-gradient-to-r from-teal-700 to-teal-900 hover:from-teal-800 hover:to-teal-950 text-white font-bold shadow-md shadow-teal-700/20"
               >
                 <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                {isActivating ? "Activating Business..." : "Activate Business & Open Dashboard"}
+                {isActivating ? "Activating Business..." : "Confirm & Open Dashboard"}
               </Button>
             )}
           </div>
@@ -1821,7 +2096,7 @@ export default function OnboardingPage() {
               value={newBank.bankName}
               onChange={(e) => setNewBank({ ...newBank, bankName: e.target.value })}
               placeholder="e.g. HDFC Bank, State Bank of India, ICICI Bank"
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
 
@@ -1835,7 +2110,7 @@ export default function OnboardingPage() {
               value={newBank.accountNickname}
               onChange={(e) => setNewBank({ ...newBank, accountNickname: e.target.value })}
               placeholder="e.g. Primary Operating Current A/C"
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
 
@@ -1847,7 +2122,7 @@ export default function OnboardingPage() {
               <select
                 value={newBank.accountType}
                 onChange={(e) => setNewBank({ ...newBank, accountType: e.target.value as "current" | "savings" | "od_cc" })}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
               >
                 <option value="current">Current Account</option>
                 <option value="od_cc">Overdraft / Cash Credit (OD/CC)</option>
@@ -1864,9 +2139,8 @@ export default function OnboardingPage() {
                 value={newBank.accountNumberMasked}
                 onChange={(e) => setNewBank({ ...newBank, accountNumberMasked: e.target.value })}
                 placeholder="e.g. ••••4892"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-              >
-              </input>
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono"
+              />
             </div>
           </div>
 
@@ -1882,7 +2156,7 @@ export default function OnboardingPage() {
                 value={newBank.currentBalance || ""}
                 onChange={(e) => setNewBank({ ...newBank, currentBalance: Number(e.target.value) || 0 })}
                 placeholder="e.g. 500000"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -1896,10 +2170,10 @@ export default function OnboardingPage() {
                 value={newBank.restrictedAmount || ""}
                 onChange={(e) => setNewBank({ ...newBank, restrictedAmount: Number(e.target.value) || 0 })}
                 placeholder="e.g. 50000"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
               <span className="text-[10px] text-slate-500 mt-0.5 block">
-                Subtracted from available cash
+                Subtracted from available operating cash
               </span>
             </div>
           </div>
@@ -1908,7 +2182,7 @@ export default function OnboardingPage() {
             <Button type="button" variant="outline" size="sm" onClick={() => setIsBankModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="sm">
+            <Button type="submit" variant="primary" size="sm" className="bg-teal-700 hover:bg-teal-800">
               Save Account
             </Button>
           </div>
@@ -1934,7 +2208,7 @@ export default function OnboardingPage() {
                 value={newRec.customerName}
                 onChange={(e) => setNewRec({ ...newRec, customerName: e.target.value })}
                 placeholder="e.g. Zenith Aero Components"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -1948,7 +2222,7 @@ export default function OnboardingPage() {
                 value={newRec.invoiceNumber}
                 onChange={(e) => setNewRec({ ...newRec, invoiceNumber: e.target.value })}
                 placeholder="e.g. INV-2026-094"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono"
               />
             </div>
           </div>
@@ -1965,7 +2239,7 @@ export default function OnboardingPage() {
                 value={newRec.invoiceAmount || ""}
                 onChange={(e) => setNewRec({ ...newRec, invoiceAmount: Number(e.target.value) || 0 })}
                 placeholder="e.g. 480000"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -1979,15 +2253,15 @@ export default function OnboardingPage() {
                 value={newRec.amountReceived || ""}
                 onChange={(e) => setNewRec({ ...newRec, amountReceived: Number(e.target.value) || 0 })}
                 placeholder="e.g. 100000"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
           </div>
 
           {/* Outstanding Balance Preview */}
-          <div className="p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-center justify-between">
+          <div className="p-2.5 rounded-lg bg-teal-50 border border-teal-200 text-xs text-teal-950 flex items-center justify-between">
             <span className="font-semibold">Calculated Outstanding Balance:</span>
-            <span className="font-extrabold text-blue-700">
+            <span className="font-extrabold text-teal-800">
               {formatCurrency(Math.max(0, (newRec.invoiceAmount || 0) - (newRec.amountReceived || 0)))}
             </span>
           </div>
@@ -2001,7 +2275,7 @@ export default function OnboardingPage() {
                 type="date"
                 value={newRec.invoiceDate}
                 onChange={(e) => setNewRec({ ...newRec, invoiceDate: e.target.value })}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -2014,7 +2288,7 @@ export default function OnboardingPage() {
                 required
                 value={newRec.dueDate}
                 onChange={(e) => setNewRec({ ...newRec, dueDate: e.target.value, expectedCollectionDate: e.target.value })}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
           </div>
@@ -2023,7 +2297,7 @@ export default function OnboardingPage() {
             <Button type="button" variant="outline" size="sm" onClick={() => setIsReceivableModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="sm">
+            <Button type="submit" variant="primary" size="sm" className="bg-teal-700 hover:bg-teal-800">
               Save Invoice
             </Button>
           </div>
@@ -2049,7 +2323,7 @@ export default function OnboardingPage() {
                 value={newPay.vendorName}
                 onChange={(e) => setNewPay({ ...newPay, vendorName: e.target.value })}
                 placeholder="e.g. Bharat Alloys & Steel"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -2063,7 +2337,7 @@ export default function OnboardingPage() {
                 value={newPay.invoiceNumber}
                 onChange={(e) => setNewPay({ ...newPay, invoiceNumber: e.target.value })}
                 placeholder="e.g. SUP-0492"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 font-mono"
               />
             </div>
           </div>
@@ -2080,7 +2354,7 @@ export default function OnboardingPage() {
                 value={newPay.totalAmount || ""}
                 onChange={(e) => setNewPay({ ...newPay, totalAmount: Number(e.target.value) || 0 })}
                 placeholder="e.g. 250000"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -2094,7 +2368,7 @@ export default function OnboardingPage() {
                 value={newPay.paidAmount || ""}
                 onChange={(e) => setNewPay({ ...newPay, paidAmount: Number(e.target.value) || 0 })}
                 placeholder="e.g. 50000"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
           </div>
@@ -2117,7 +2391,7 @@ export default function OnboardingPage() {
                 required
                 value={newPay.dueDate}
                 onChange={(e) => setNewPay({ ...newPay, dueDate: e.target.value })}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -2128,7 +2402,7 @@ export default function OnboardingPage() {
               <select
                 value={newPay.category}
                 onChange={(e) => setNewPay({ ...newPay, category: e.target.value })}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
               >
                 <option value="Raw Materials">Raw Materials</option>
                 <option value="Consumables & Tooling">Consumables & Tooling</option>
@@ -2144,7 +2418,7 @@ export default function OnboardingPage() {
             <Button type="button" variant="outline" size="sm" onClick={() => setIsPayableModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="sm">
+            <Button type="submit" variant="primary" size="sm" className="bg-teal-700 hover:bg-teal-800">
               Save Payable
             </Button>
           </div>
@@ -2190,7 +2464,7 @@ export default function OnboardingPage() {
               value={newInv.itemName}
               onChange={(e) => setNewInv({ ...newInv, itemName: e.target.value })}
               placeholder="e.g. CNC Carbide Milling Inserts"
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
 
@@ -2206,7 +2480,7 @@ export default function OnboardingPage() {
                 value={newInv.estimatedValue || ""}
                 onChange={(e) => setNewInv({ ...newInv, estimatedValue: Number(e.target.value) || 0 })}
                 placeholder="e.g. 150000"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -2219,7 +2493,7 @@ export default function OnboardingPage() {
                 value={`${newInv.quantity || 1} ${newInv.unit || "Units"}`}
                 onChange={(e) => setNewInv({ ...newInv, unit: e.target.value })}
                 placeholder="e.g. 100 Pcs"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
           </div>
@@ -2228,7 +2502,7 @@ export default function OnboardingPage() {
             <Button type="button" variant="outline" size="sm" onClick={() => setIsInventoryModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="sm">
+            <Button type="submit" variant="primary" size="sm" className="bg-teal-700 hover:bg-teal-800">
               Add Inventory
             </Button>
           </div>
@@ -2273,7 +2547,7 @@ export default function OnboardingPage() {
               value={newAsset.assetName}
               onChange={(e) => setNewAsset({ ...newAsset, assetName: e.target.value })}
               placeholder="e.g. 5-Axis CNC Machining Center"
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
 
@@ -2285,7 +2559,7 @@ export default function OnboardingPage() {
               <select
                 value={newAsset.category}
                 onChange={(e) => setNewAsset({ ...newAsset, category: e.target.value as "machinery" | "vehicles" | "it_hardware" | "furniture_fixtures" | "real_estate" | "other" })}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
               >
                 <option value="machinery">Machinery & Plant Equipment</option>
                 <option value="vehicles">Commercial Vehicles</option>
@@ -2306,7 +2580,7 @@ export default function OnboardingPage() {
                 value={newAsset.currentEstimatedValue || ""}
                 onChange={(e) => setNewAsset({ ...newAsset, currentEstimatedValue: Number(e.target.value) || 0 })}
                 placeholder="e.g. 2500000"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
           </div>
@@ -2315,7 +2589,7 @@ export default function OnboardingPage() {
             <Button type="button" variant="outline" size="sm" onClick={() => setIsAssetModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="sm">
+            <Button type="submit" variant="primary" size="sm" className="bg-teal-700 hover:bg-teal-800">
               Add Asset
             </Button>
           </div>
@@ -2365,7 +2639,7 @@ export default function OnboardingPage() {
             <select
               value={newLiability.liabilityType}
               onChange={(e) => setNewLiability({ ...newLiability, liabilityType: e.target.value as "loan" | "tax_payable" | "payroll_obligation" | "other" })}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
             >
               <option value="loan">Bank Loan / Working Capital Credit</option>
               <option value="tax_payable">Statutory Tax Payable (GST / TDS)</option>
@@ -2384,7 +2658,7 @@ export default function OnboardingPage() {
               value={newLiability.name}
               onChange={(e) => setNewLiability({ ...newLiability, name: e.target.value })}
               placeholder="e.g. SIDBI Machinery Loan or October GST"
-              className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
 
@@ -2400,7 +2674,7 @@ export default function OnboardingPage() {
                 value={newLiability.amount || ""}
                 onChange={(e) => setNewLiability({ ...newLiability, amount: Number(e.target.value) || 0 })}
                 placeholder="e.g. 450000"
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -2412,7 +2686,7 @@ export default function OnboardingPage() {
                 type="date"
                 value={newLiability.dueDate || ""}
                 onChange={(e) => setNewLiability({ ...newLiability, dueDate: e.target.value })}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
           </div>
@@ -2421,7 +2695,7 @@ export default function OnboardingPage() {
             <Button type="button" variant="outline" size="sm" onClick={() => setIsLiabilityModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="sm">
+            <Button type="submit" variant="primary" size="sm" className="bg-teal-700 hover:bg-teal-800">
               Save Liability
             </Button>
           </div>

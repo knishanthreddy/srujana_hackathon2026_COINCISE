@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -18,10 +18,18 @@ import {
   Sparkles,
   ShieldCheck,
   ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { DEMO_SUMMARY } from "@/lib/demo-data";
 import { Badge } from "@/components/ui/Badge";
+import {
+  getUnifiedDashboardMetrics,
+  subscribeToFinancialRecords,
+  subscribeToReceivables,
+  subscribeToPayables,
+} from "@/lib/data-service";
+import { getOnboardingData, EVENT_ONBOARDING_UPDATED } from "@/lib/onboarding-service";
 
 interface NavItem {
   name: string;
@@ -57,6 +65,35 @@ export function Sidebar({
   onClose?: () => void;
 }) {
   const pathname = usePathname();
+  const [availableCash, setAvailableCash] = useState(DEMO_SUMMARY.availableCash);
+  const [minimumReserve, setMinimumReserve] = useState(DEMO_SUMMARY.minimumReserve);
+  const [isDeficit, setIsDeficit] = useState(false);
+
+  useEffect(() => {
+    const syncCash = () => {
+      const metrics = getUnifiedDashboardMetrics();
+      setAvailableCash(metrics.availableCash);
+      const onboarding = getOnboardingData();
+      const minReserve = onboarding.openingFinances.minimumReserve || DEMO_SUMMARY.minimumReserve;
+      setMinimumReserve(minReserve);
+      setIsDeficit(metrics.availableCash < minReserve);
+    };
+
+    syncCash();
+    const unsubRecs = subscribeToFinancialRecords(syncCash);
+    const unsubReceivables = subscribeToReceivables(syncCash);
+    const unsubPayables = subscribeToPayables(syncCash);
+    window.addEventListener(EVENT_ONBOARDING_UPDATED, syncCash);
+    window.addEventListener("storage", syncCash);
+
+    return () => {
+      unsubRecs();
+      unsubReceivables();
+      unsubPayables();
+      window.removeEventListener(EVENT_ONBOARDING_UPDATED, syncCash);
+      window.removeEventListener("storage", syncCash);
+    };
+  }, []);
 
   return (
     <>
@@ -205,20 +242,28 @@ export function Sidebar({
               </span>
             </div>
             <div className="flex items-baseline justify-between">
-              <span className="text-base font-bold text-white tracking-tight">
-                {formatCurrency(DEMO_SUMMARY.availableCash)}
+              <span
+                className={cn(
+                  "text-base font-bold tracking-tight transition-colors",
+                  isDeficit ? "text-amber-400" : "text-white"
+                )}
+              >
+                {formatCurrency(availableCash)}
               </span>
               <span className="text-[11px] text-slate-400">
-                Min: {formatCurrency(DEMO_SUMMARY.minimumReserve)}
+                Min: {formatCurrency(minimumReserve)}
               </span>
             </div>
             <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
               <div
-                className="bg-emerald-500 h-full rounded-full"
+                className={cn(
+                  "h-full rounded-full transition-all duration-300",
+                  isDeficit ? "bg-amber-500" : "bg-emerald-500"
+                )}
                 style={{
                   width: `${Math.min(
                     100,
-                    (DEMO_SUMMARY.availableCash / DEMO_SUMMARY.minimumReserve) * 50
+                    minimumReserve > 0 ? (availableCash / minimumReserve) * 50 : 50
                   )}%`,
                 }}
               />

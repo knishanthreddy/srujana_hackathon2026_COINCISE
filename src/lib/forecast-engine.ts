@@ -1,4 +1,5 @@
-import type { FinancialRecord, Receivable, Payable } from "./types";
+import type { FinancialRecord, Receivable, Payable } from "./types.ts";
+import type { ForecastAssumptions } from "./onboarding-types.ts";
 
 export type CashFlowCategory =
   | "receivable"
@@ -259,6 +260,172 @@ export function extractForecastItemsFromData(
       sourceId: rec.id,
       notes: rec.notes,
     });
+  }
+
+  return items;
+}
+
+/**
+ * Integrates onboarding forecast assumptions (monthly sales, expenses, growth rate,
+ * customer delay, supplier payment terms, payroll schedule, loan schedules, recurring items)
+ * with live receivables, payables, and pending records without duplicate counting.
+ */
+export function buildForecastItemsWithAssumptions(
+  records: FinancialRecord[],
+  receivables: Receivable[],
+  payables: Payable[],
+  assumptions?: ForecastAssumptions,
+  referenceDate: Date = new Date("2026-10-24T00:00:00Z"),
+  horizonDays: 7 | 30 | 60 | 90 = 30
+): CashFlowInputItem[] {
+  // 1. First extract base items from actual live records, customer invoices, and supplier bills
+  const baseItems = extractForecastItemsFromData(records, receivables, payables, referenceDate);
+  const items: CashFlowInputItem[] = [];
+
+  const customerDelay = assumptions?.typicalCustomerPaymentDelay || 0;
+
+  // Adjust dates for receivables if customer delay is assumed
+  for (const item of baseItems) {
+    if (item.category === "receivable" && customerDelay > 0) {
+      const d = new Date(item.date);
+      const delayed = addDays(d, customerDelay);
+      items.push({
+        ...item,
+        date: formatDateISO(delayed),
+        notes: item.notes
+          ? `${item.notes} (+${customerDelay}d assumed delay)`
+          : `Assumed customer delay +${customerDelay} days`,
+      });
+    } else {
+      items.push(item);
+    }
+  }
+
+  // Set of dates already having payroll, loan, or recurring items to prevent double-counting
+  const existingPayrollMonths = new Set<string>();
+  const existingLoanDates = new Set<string>();
+  for (const item of items) {
+    if (item.category === "payroll") {
+      existingPayrollMonths.add(item.date.substring(0, 7)); // YYYY-MM
+    } else if (item.category === "loan") {
+      existingLoanDates.add(item.date);
+    }
+  }
+
+  if (assumptions) {
+    // 2. Projected Payroll Schedule
+    if (
+      assumptions.payrollScheduleDay &&
+      assumptions.payrollMonthlyAmount &&
+      assumptions.payrollMonthlyAmount > 0
+    ) {
+      for (let offset = 0; offset <= horizonDays; offset++) {
+        const d = addDays(referenceDate, offset);
+        const dayOfMonth = d.getDate();
+        const monthKey = formatDateISO(d).substring(0, 7);
+
+        if (dayOfMonth === assumptions.payrollScheduleDay && !existingPayrollMonths.has(monthKey)) {
+          items.push({
+            id: `sched-payroll-${monthKey}`,
+            name: `Staff Salaries & Wages (${monthKey})`,
+            date: formatDateISO(d),
+            amount: assumptions.payrollMonthlyAmount,
+            type: "outflow",
+            category: "payroll",
+            notes: "Projected monthly payroll from onboarding schedule",
+          });
+          existingPayrollMonths.add(monthKey);
+        }
+      }
+    }
+
+    // 3. Projected Loan Repayment Schedules
+    if (assumptions.loanRepaymentSchedules && assumptions.loanRepaymentSchedules.length > 0) {
+      for (const loan of assumptions.loanRepaymentSchedules) {
+        if (loan.monthlyEMI > 0) {
+          for (let offset = 0; offset <= horizonDays; offset++) {
+            const d = addDays(referenceDate, offset);
+            const dayOfMonth = d.getDate();
+            const dateStr = formatDateISO(d);
+
+            if (dayOfMonth === loan.repaymentDayOfMonth && !existingLoanDates.has(dateStr)) {
+              items.push({
+                id: `sched-loan-${loan.id}-${dateStr}`,
+                name: `Loan EMI: ${loan.loanName}`,
+                date: dateStr,
+                amount: loan.monthlyEMI,
+                type: "outflow",
+                category: "loan",
+                notes: "Scheduled term loan EMI",
+              });
+              existingLoanDates.add(dateStr);
+            }
+          }
+        }
+      }
+    }
+
+    // 4. Recurring Expenses (e.g. rent, utilities)
+    if (assumptions.recurringExpenses && assumptions.recurringExpenses.length > 0) {
+      for (const exp of assumptions.recurringExpenses) {
+        if (exp.amount > 0) {
+          for (let offset = 0; offset <= horizonDays; offset++) {
+            const d = addDays(referenceDate, offset);
+            const dateStr = formatDateISO(d);
+            let shouldTrigger = false;
+
+            if (exp.frequency === "monthly" && exp.dayOfMonth) {
+              shouldTrigger = d.getDate() === exp.dayOfMonth;
+            } else if (exp.frequency === "weekly") {
+              shouldTrigger = offset > 0 && offset % 7 === 0;
+            }
+
+            if (shouldTrigger) {
+              items.push({
+                id: `rec-exp-${exp.id}-${dateStr}`,
+                name: exp.description,
+                date: dateStr,
+                amount: exp.amount,
+                type: "outflow",
+                category: "other_expense",
+                notes: "Recurring operating expense",
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // 5. Recurring Income (e.g. retainers)
+    if (assumptions.recurringIncome && assumptions.recurringIncome.length > 0) {
+      for (const inc of assumptions.recurringIncome) {
+        if (inc.amount > 0) {
+          for (let offset = 0; offset <= horizonDays; offset++) {
+            const d = addDays(referenceDate, offset);
+            const dateStr = formatDateISO(d);
+            let shouldTrigger = false;
+
+            if (inc.frequency === "monthly" && inc.dayOfMonth) {
+              shouldTrigger = d.getDate() === inc.dayOfMonth;
+            } else if (inc.frequency === "weekly") {
+              shouldTrigger = offset > 0 && offset % 7 === 0;
+            }
+
+            if (shouldTrigger) {
+              items.push({
+                id: `rec-inc-${inc.id}-${dateStr}`,
+                name: inc.description,
+                date: dateStr,
+                amount: inc.amount,
+                type: "inflow",
+                category: "sales",
+                notes: "Recurring retainer/sales income",
+              });
+            }
+          }
+        }
+      }
+    }
   }
 
   return items;

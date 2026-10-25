@@ -4,7 +4,11 @@ import type {
   OnboardingCompanyVerification,
   OnboardingOpeningFinances,
   OnboardingPreferences,
+  ForecastAssumptions,
 } from "./onboarding-types.ts";
+import { calculateFinancialSummary } from "./financial-summary.ts";
+export { calculateFinancialSummary } from "./financial-summary.ts";
+export type { FinancialSummaryResult, FinancialValidationError } from "./financial-summary.ts";
 
 const STORAGE_KEY_ONBOARDING = "coincise_business_onboarding_v1";
 export const EVENT_ONBOARDING_UPDATED = "coincise_onboarding_updated";
@@ -192,6 +196,40 @@ export const DEFAULT_ONBOARDING_DATA: OnboardingData = {
     safetyReserveBuffer: 250000,
     overdueAlertDays: 14,
   },
+  forecastAssumptions: {
+    typicalMonthlySales: 600000,
+    typicalMonthlyExpenses: 400000,
+    expectedGrowthRate: 5,
+    typicalCustomerPaymentDelay: 7,
+    supplierPaymentTerms: 30,
+    payrollScheduleDay: 5,
+    payrollMonthlyAmount: 210000,
+    recurringIncome: [],
+    recurringExpenses: [
+      {
+        id: "rec-exp-01",
+        description: "Facility Lease & Workshop Maintenance",
+        amount: 45000,
+        frequency: "monthly",
+        dayOfMonth: 1,
+      },
+      {
+        id: "rec-exp-02",
+        description: "Industrial Power & Utilities",
+        amount: 28000,
+        frequency: "monthly",
+        dayOfMonth: 10,
+      },
+    ],
+    loanRepaymentSchedules: [
+      {
+        id: "loan-sched-01",
+        loanName: "Machinery Term Loan (SIDBI)",
+        monthlyEMI: 35000,
+        repaymentDayOfMonth: 10,
+      },
+    ],
+  },
 };
 
 /**
@@ -302,9 +340,10 @@ export async function completeOnboarding(
     completedAt: new Date().toISOString(),
   };
 
-  // 1. Calculate Total Liquid Available Cash:
-  // Strict rule: Inventory, advances, and receivables are NOT counted in liquid cash.
-  const totalLiquidCash = calculateTotalLiquidCash(finalizedData.openingFinances);
+  // 1. Calculate Available Operating Cash using business logic definition:
+  // Strict rule: Inventory, advances, receivables, and restricted funds are NOT counted in spendable cash.
+  const summary = calculateFinancialSummary(finalizedData.openingFinances);
+  const totalLiquidCash = summary.availableOperatingCash;
 
   // 2. Synchronize with Live Stores if in Browser Runtime
   if (typeof window !== "undefined") {

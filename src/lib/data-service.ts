@@ -9,11 +9,14 @@ import {
 } from "./types";
 import {
   extractForecastItemsFromData,
+  buildForecastItemsWithAssumptions,
   applyScenarioModifiers,
   generateCashForecast,
   ScenarioModifiers,
   ForecastSummary,
 } from "./forecast-engine";
+import { getOnboardingData } from "./onboarding-service";
+import { calculateFinancialSummary } from "./financial-summary";
 import { DEMO_RECORDS, DEMO_RECEIVABLES, DEMO_PAYABLES, DEMO_SUMMARY } from "./demo-data";
 import { financialRecordSchema, FinancialRecordFormData } from "./validations/record";
 import {
@@ -777,7 +780,23 @@ export function getUnifiedDashboardMetrics() {
 
   const baselineTotals = calculateFinancialTotals(DEMO_RECORDS);
   const netDelta = recordTotals.netClearedCash - baselineTotals.netClearedCash;
-  const availableCash = Math.max(0, DEMO_SUMMARY.availableCash + netDelta);
+
+  let baseOpeningCash = DEMO_SUMMARY.availableCash;
+  if (typeof window !== "undefined") {
+    try {
+      const onboarding = getOnboardingData();
+      if (onboarding && onboarding.isCompleted && onboarding.openingFinances) {
+        const sum = calculateFinancialSummary(onboarding.openingFinances);
+        if (typeof sum.availableOperatingCash === "number") {
+          baseOpeningCash = sum.availableOperatingCash;
+        }
+      }
+    } catch {
+      // Keep DEMO_SUMMARY.availableCash
+    }
+  }
+
+  const availableCash = Math.max(0, baseOpeningCash + netDelta);
 
   return {
     availableCash,
@@ -806,8 +825,19 @@ export function getLiveForecast(
   const payables = getPayables();
   const metrics = getUnifiedDashboardMetrics();
 
+  const onboarding = typeof window !== "undefined" ? getOnboardingData() : null;
+  const assumptions = onboarding?.forecastAssumptions;
+  const effectiveReserve = onboarding?.openingFinances?.minimumReserve || minimumReserve;
+
   const refDate = customReferenceDate || new Date("2026-10-24T00:00:00Z");
-  let items = extractForecastItemsFromData(records, receivables, payables, refDate);
+  let items = buildForecastItemsWithAssumptions(
+    records,
+    receivables,
+    payables,
+    assumptions,
+    refDate,
+    horizon
+  );
 
   if (modifiers) {
     items = applyScenarioModifiers(items, modifiers, refDate);
@@ -818,7 +848,7 @@ export function getLiveForecast(
     items,
     horizonDays: horizon,
     referenceDate: refDate,
-    minimumReserve,
+    minimumReserve: effectiveReserve,
   });
 }
 

@@ -61,68 +61,80 @@ import {
   getPayables,
   subscribeToPayables,
   calculatePayablesTotals,
+  getUnifiedDashboardMetrics,
+  getLiveForecast,
 } from "@/lib/data-service";
+import { getOnboardingData, EVENT_ONBOARDING_UPDATED } from "@/lib/onboarding-service";
 import { FinancialRecord, Receivable, Payable } from "@/lib/types";
 
 type Horizon = 7 | 30 | 60 | 90;
 
 export default function DashboardPage() {
   const [horizon, setHorizon] = useState<Horizon>(30);
-  const [records, setRecords] = useState<FinancialRecord[]>(DEMO_RECORDS);
-  const [receivables, setReceivables] = useState<Receivable[]>(DEMO_RECEIVABLES);
-  const [payables, setPayables] = useState<Payable[]>(DEMO_PAYABLES);
+  const [records, setRecords] = useState<FinancialRecord[]>([]);
+  const [receivables, setReceivables] = useState<Receivable[]>([]);
+  const [payables, setPayables] = useState<Payable[]>([]);
+  const [onboarding, setOnboarding] = useState(getOnboardingData());
 
-  // Subscribe to live records, receivables, and payables from shared data service
+  // Subscribe to live records, receivables, payables, and onboarding updates
   useEffect(() => {
-    setRecords(getFinancialRecords());
-    setReceivables(getReceivables());
-    setPayables(getPayables());
+    const syncAll = () => {
+      setRecords(getFinancialRecords());
+      setReceivables(getReceivables());
+      setPayables(getPayables());
+      setOnboarding(getOnboardingData());
+    };
 
-    const unRecs = subscribeToFinancialRecords(setRecords);
-    const unReceivables = subscribeToReceivables(setReceivables);
-    const unPayables = subscribeToPayables(setPayables);
+    syncAll();
+
+    const unRecs = subscribeToFinancialRecords(syncAll);
+    const unReceivables = subscribeToReceivables(syncAll);
+    const unPayables = subscribeToPayables(syncAll);
+    window.addEventListener(EVENT_ONBOARDING_UPDATED, syncAll);
 
     return () => {
       unRecs();
       unReceivables();
       unPayables();
+      window.removeEventListener(EVENT_ONBOARDING_UPDATED, syncAll);
     };
   }, []);
 
-  // Compute live totals strictly segregating cleared vs expected
-  const recordTotals = useMemo(() => calculateFinancialTotals(records), [records]);
-  const baselineTotals = useMemo(() => calculateFinancialTotals(DEMO_RECORDS), []);
+  // Commercial identity from onboarding
+  const businessName =
+    onboarding.profile.tradeName || onboarding.profile.mcaLegalName || DEMO_SUMMARY.businessName;
+  const entityType = onboarding.profile.entityType || "pvt_ltd";
+  const minimumReserve = onboarding.openingFinances.minimumReserve || DEMO_SUMMARY.minimumReserve;
 
+  // Real-time live totals
   const recTotals = useMemo(() => calculateReceivablesTotals(receivables), [receivables]);
   const payTotals = useMemo(() => calculatePayablesTotals(payables), [payables]);
 
-  // Compute dynamic live available cash: base cash + additional net cleared cash from user changes
-  const netDelta = recordTotals.netClearedCash - baselineTotals.netClearedCash;
-  const currentAvailableCash = Math.max(0, DEMO_SUMMARY.availableCash + netDelta);
+  // Unified available cash calculation
+  const dashboardMetrics = useMemo(() => getUnifiedDashboardMetrics(), [records, receivables, payables]);
+  const currentAvailableCash = dashboardMetrics.availableCash;
 
-  // Filter forecast points according to selected horizon
-  const displayedForecast = DEMO_FORECAST_POINTS.filter(
-    (pt) => pt.dayOffset <= horizon
-  );
+  // Live forecast trajectory from deterministic forecasting engine
+  const liveForecast = useMemo(() => {
+    return getLiveForecast(horizon, minimumReserve);
+  }, [horizon, minimumReserve, records, receivables, payables]);
 
-  // Horizon-specific metrics
-  const horizonInflows = displayedForecast.reduce((sum, pt) => sum + pt.projectedInflow, 0);
-  const horizonOutflows = displayedForecast.reduce((sum, pt) => sum + pt.projectedOutflow, 0);
-  const horizonClosingCash =
-    displayedForecast[displayedForecast.length - 1]?.closingCash ?? DEMO_SUMMARY.availableCash;
-  const lowestCashInHorizon = Math.min(
-    ...displayedForecast.map((pt) => pt.closingCash)
-  );
-  const isReserveBreachedInHorizon = lowestCashInHorizon < DEMO_SUMMARY.minimumReserve;
+  const displayedForecast = liveForecast.dailyPoints;
+  const horizonInflows = liveForecast.totalInflows;
+  const horizonOutflows = liveForecast.totalOutflows;
+  const horizonClosingCash = liveForecast.closingCash;
+  const lowestCashInHorizon = liveForecast.lowestCashBalance;
+  const isReserveBreachedInHorizon = liveForecast.isReserveBreached;
+  const firstReserveBreachDate = liveForecast.firstReserveBreachDate;
 
   // Chart data for Inflows vs Outflows (only days with flows)
   const flowsChartData = displayedForecast
-    .filter((pt) => pt.dayOffset > 0)
+    .filter((pt) => pt.dayOffset > 0 && (pt.inflows > 0 || pt.outflows > 0))
     .map((pt) => ({
       date: pt.date,
       dayLabel: `Day +${pt.dayOffset}`,
-      Inflows: pt.projectedInflow,
-      Outflows: pt.projectedOutflow,
+      Inflows: pt.inflows,
+      Outflows: pt.outflows,
       netFlow: pt.netCashFlow,
     }));
 
@@ -139,7 +151,7 @@ export default function DashboardPage() {
               DEMO MODE • FICTIONAL SAMPLE DATA
             </span>
             <span className="text-xs text-slate-400">
-              Company: <strong className="text-white">{DEMO_SUMMARY.businessName}</strong>
+              Company: <strong className="text-white">{businessName}</strong> ({entityType.toUpperCase()})
             </span>
           </div>
 
@@ -147,7 +159,15 @@ export default function DashboardPage() {
             Business Liquidity & Forecast Center
           </h2>
           <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-            Realized cash position is stable for the next 14 days. Looking across the 30-day window, a projected minimum reserve breach on <strong>15 Nov (Day 22)</strong> requires proactive receivables follow-up or scheduled vendor payment pacing.
+            {isReserveBreachedInHorizon ? (
+              <span>
+                ⚠️ Proactive Risk Warning: Based on your {formatCurrency(minimumReserve)} reserve floor, a projected liquidity dip is detected on <strong>{firstReserveBreachDate || "upcoming days"}</strong> (lowest projected balance: {formatCurrency(lowestCashInHorizon)}). Proactive receivables follow-up or payment scheduling is advised.
+              </span>
+            ) : (
+              <span>
+                Operating cash remains healthy across the {horizon}-day runway with closing projected cash of <strong>{formatCurrency(horizonClosingCash)}</strong> maintaining above your {formatCurrency(minimumReserve)} reserve floor.
+              </span>
+            )}
           </p>
         </div>
 
@@ -230,7 +250,7 @@ export default function DashboardPage() {
         <StatCard
           title={`Projected Cash (Day ${horizon})`}
           value={formatCurrency(horizonClosingCash)}
-          subtitle={`Floor: ${formatCurrency(DEMO_SUMMARY.minimumReserve)}`}
+          subtitle={`Floor: ${formatCurrency(minimumReserve)}`}
           icon={<TrendingUp className="w-5 h-5 text-indigo-600" />}
           variant={isReserveBreachedInHorizon ? "warning" : "primary"}
           trend={{
@@ -239,6 +259,37 @@ export default function DashboardPage() {
           }}
         />
       </div>
+
+      {/* Dynamic Reserve Breach Alert Banner */}
+      {isReserveBreachedInHorizon && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950 via-amber-900 to-slate-900 border border-amber-600/50 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0 border border-amber-400/30">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-amber-300 uppercase tracking-wide flex items-center gap-2">
+                <span>Predicted Cash Reserve Breach</span>
+                <span className="px-1.5 py-0.2 rounded bg-amber-500/30 text-amber-200 text-[10px]">Action Recommended</span>
+              </div>
+              <div className="text-xs text-slate-200 mt-0.5">
+                Closing cash is projected to drop below your {formatCurrency(minimumReserve)} minimum safety floor on{" "}
+                <strong className="text-white">{firstReserveBreachDate || "upcoming days"}</strong>, reaching a trough of{" "}
+                <strong className="text-amber-300">{formatCurrency(lowestCashInHorizon)}</strong>.
+              </div>
+            </div>
+          </div>
+          <Link href="/decision-centre" className="shrink-0">
+            <Button
+              variant="primary"
+              size="sm"
+              className="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-sm"
+            >
+              Simulate Corrective Actions &rarr;
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* 3. Dual Recharts Financial Visualizations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -313,12 +364,12 @@ export default function DashboardPage() {
                     }}
                   />
                   <ReferenceLine
-                    y={DEMO_SUMMARY.minimumReserve}
-                    stroke="#e11d48"
+                    y={minimumReserve}
+                    stroke="#f59e0b"
                     strokeDasharray="4 4"
                     label={{
-                      value: "Min Reserve: ₹2.5L",
-                      fill: "#e11d48",
+                      value: `Min Reserve: ₹${(minimumReserve / 1000).toFixed(0)}k`,
+                      fill: "#d97706",
                       fontSize: 10,
                       position: "insideBottomRight",
                     }}
@@ -343,7 +394,7 @@ export default function DashboardPage() {
                 Lowest Trough:{" "}
                 <strong
                   className={
-                    lowestCashInHorizon < DEMO_SUMMARY.minimumReserve
+                    lowestCashInHorizon < minimumReserve
                       ? "text-rose-600 font-bold"
                       : "text-emerald-700 font-bold"
                   }

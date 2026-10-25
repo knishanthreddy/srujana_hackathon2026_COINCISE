@@ -121,6 +121,8 @@ export interface OnboardingOpeningFinances {
   minimumReserve: number;
   otherLiquidFunds: number;
   shortTermInvestments: number;
+  isShortTermInvestmentImmediatelyAvailable?: boolean;
+  shortTermInvestmentDescription?: string;
   receivables: OpeningReceivableItem[];
   supplierAdvances: SupplierAdvanceItem[];
   inventoryItems: InventoryItem[];
@@ -131,6 +133,36 @@ export interface OnboardingOpeningFinances {
   taxesPayable: LiabilityItem[];
   payrollObligations: LiabilityItem[];
   otherLiabilities: LiabilityItem[];
+}
+
+export interface ForecastAssumptions {
+  typicalMonthlySales?: number;
+  typicalMonthlyExpenses?: number;
+  expectedGrowthRate?: number; // e.g. 5 for 5%
+  typicalCustomerPaymentDelay?: number; // in days
+  supplierPaymentTerms?: number; // in days
+  payrollScheduleDay?: number; // day of month e.g. 5
+  payrollMonthlyAmount?: number;
+  recurringIncome?: Array<{
+    id: string;
+    description: string;
+    amount: number;
+    frequency: "monthly" | "weekly";
+    dayOfMonth?: number;
+  }>;
+  recurringExpenses?: Array<{
+    id: string;
+    description: string;
+    amount: number;
+    frequency: "monthly" | "weekly";
+    dayOfMonth?: number;
+  }>;
+  loanRepaymentSchedules?: Array<{
+    id: string;
+    loanName: string;
+    monthlyEMI: number;
+    repaymentDayOfMonth: number;
+  }>;
 }
 
 export interface OnboardingPreferences {
@@ -147,4 +179,5 @@ export interface OnboardingData {
   verification: OnboardingCompanyVerification;
   openingFinances: OnboardingOpeningFinances;
   preferences: OnboardingPreferences;
+  forecastAssumptions?: ForecastAssumptions;
 }
