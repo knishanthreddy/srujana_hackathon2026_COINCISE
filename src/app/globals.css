@@ -48,3 +48,30 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Formal A4 Print Styling for Invoices & Financial Statements */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+  }
+  header, aside, nav, footer, .print\:hidden {
+    display: none !important;
+  }
+  #printable-statement, #printable-invoice {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  tr {
+    break-inside: avoid;
+  }
+}

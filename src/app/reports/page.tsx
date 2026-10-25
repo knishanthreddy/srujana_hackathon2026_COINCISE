@@ -54,8 +54,10 @@ import { getDisputes } from "@/lib/dispute-service";
 import { generateSmartAlerts } from "@/lib/alerts-engine";
 import { FinancialRecord, Receivable, Payable, DisputeCase } from "@/lib/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { FinancialStatementsSection } from "@/components/statements/FinancialStatementsSection";
 
 type ReportTab =
+  | "statements"
   | "income_expense"
   | "forecast_actual"
   | "receivables_ageing"
@@ -376,6 +378,16 @@ export default function ReportsPage() {
       {/* Navigation Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b border-[#E8E1D5] pb-3">
         <button
+          onClick={() => setActiveTab("statements")}
+          className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
+            activeTab === "statements"
+              ? "bg-[#138C83] text-white shadow-xs"
+              : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
+          }`}
+        >
+          Financial Statements (P&amp;L, Cash Flow, BS)
+        </button>
+        <button
           onClick={() => setActiveTab("income_expense")}
           className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all ${
             activeTab === "income_expense"
@@ -383,7 +395,7 @@ export default function ReportsPage() {
               : "bg-white text-[#7A7369] hover:bg-[#F7F3EA] border border-[#E8E1D5]"
           }`}
         >
-          Income & Expenses
+          Income &amp; Expenses
         </button>
         <button
           onClick={() => setActiveTab("forecast_actual")}
@@ -436,6 +448,13 @@ export default function ReportsPage() {
           Disputes & Risk Alerts
         </button>
       </div>
+
+      {/* =========================================================================
+          TAB 0: FINANCIAL STATEMENTS (PROFIT & LOSS, CASH FLOW, BALANCE SHEET)
+          ========================================================================= */}
+      {activeTab === "statements" && (
+        <FinancialStatementsSection />
+      )}
 
       {/* =========================================================================
           TAB 1: INCOME & EXPENSE REPORT
