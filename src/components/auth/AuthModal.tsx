@@ -135,17 +135,17 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <Database className={`w-4 h-4 ${hasConfig ? "text-[#138C83]" : "text-[#F15A35]"}`} />
             <div>
               <p className="font-bold">
-                {hasConfig ? "Supabase PostgreSQL Active" : "Prototype Offline Demo Mode"}
+                {hasConfig ? "Supabase PostgreSQL Active" : "Local Workspace Active"}
               </p>
               <p className="text-[11px] opacity-80">
                 {hasConfig
                   ? "Real-time cloud database connected with Row Level Security."
-                  : "Using browser localStorage with fictional demo dataset."}
+                  : "Using secure browser storage for financial records."}
               </p>
             </div>
           </div>
           <Badge variant={hasConfig ? "success" : "neutral"} className="shrink-0 text-[10px]">
-            {hasConfig ? "Cloud" : "Demo"}
+            {hasConfig ? "Cloud" : "Local"}
           </Badge>
         </div>
 
@@ -179,7 +179,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           /* Informative prompt when running offline without .env.local */
           <div className="space-y-3 text-xs text-slate-600">
             <p>
-              COINCISE is currently operating in <strong>Zero-Config Demo Mode</strong>. All additions, partial receipts, forecast calculations, and dispute cases are persisted locally in your browser storage.
+              COINCISE is currently operating in <strong>Local Storage Mode</strong>. All additions, receipts, forecast calculations, and dispute cases are securely stored in your local workspace.
             </p>
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 font-mono text-[11px] space-y-1">
               <p className="font-bold text-slate-700 font-sans">To connect persistent Supabase:</p>
@@ -201,7 +201,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 Launch Setup Wizard
               </Button>
               <Button size="sm" variant="primary" onClick={onClose}>
-                Continue in Demo Mode
+                Continue to Dashboard
               </Button>
             </div>
           </div>

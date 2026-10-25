@@ -239,9 +239,9 @@ export default function RecordsPage() {
   };
 
   const handleResetData = () => {
-    if (confirm("Reset financial records to initial demo records? Any custom entries will be reverted.")) {
+    if (confirm("Reset financial records to default baseline records? Any custom entries will be reverted.")) {
       resetFinancialRecords();
-      showToast("Financial records reset to baseline demo dataset.");
+      showToast("Financial records reset to baseline dataset.");
     }
   };
 

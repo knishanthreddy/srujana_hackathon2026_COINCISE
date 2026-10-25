@@ -328,7 +328,7 @@ export default function SettingsPage() {
             </Button>
           </Link>
           <Badge variant="success" size="md">
-            Sandbox Active
+            Active Workspace
           </Badge>
         </div>
       </div>
@@ -956,9 +956,9 @@ export default function SettingsPage() {
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3.5 bg-stone-50 rounded-xl border border-stone-200">
                 <div>
-                  <p className="text-xs font-bold text-slate-900">Restore Baseline Demo Records</p>
+                  <p className="text-xs font-bold text-slate-900">Restore Baseline Records</p>
                   <p className="text-[11px] text-slate-500">
-                    Restores original demo receivables, payables, and transactions for presentations.
+                    Restores initial baseline receivables, payables, and transactions.
                   </p>
                 </div>
 
@@ -970,7 +970,7 @@ export default function SettingsPage() {
                   className="text-rose-600 border-rose-200 hover:bg-rose-50 shrink-0"
                 >
                   <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                  Reset Demo Records
+                  Reset Records
                 </Button>
               </div>
             </CardContent>

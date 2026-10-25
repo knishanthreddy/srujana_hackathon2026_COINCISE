@@ -214,7 +214,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* 1. Executive Briefing Banner & Fictional Demo Mode Tag */}
+      {/* 1. Executive Briefing Banner */}
       <div className="bg-[#242321] rounded-2xl sm:rounded-3xl p-5 sm:p-6 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 border border-[#383632]">
         <div className="space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
@@ -222,7 +222,7 @@ export default function DashboardPage() {
               Executive Briefing
             </span>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#DDEFE8] text-[#138C83] tracking-wider border border-[#138C83]/30">
-              Demo Mode • Verified Books
+              Verified Books
             </span>
             <span className="text-xs text-[#A69C8D]">
               Entity: <strong className="text-white">{businessName}</strong> ({entityType.toUpperCase()})

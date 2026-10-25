@@ -8,7 +8,7 @@ let browserClient: SupabaseClient | null = null;
 
 /**
  * Indicates whether live Supabase credentials are configured.
- * When false, COINCISE operates safely in offline Demo Mode.
+ * When false, COINCISE operates safely in local storage mode.
  */
 export function isSupabaseConfigured(): boolean {
   return !!(

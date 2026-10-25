@@ -153,11 +153,6 @@ export function Header({ onToggleSidebar, onOpenNewRecordModal }: HeaderProps) {
             <h1 className="text-base sm:text-lg font-extrabold text-[#242321] tracking-tight truncate">
               {currentMeta.title}
             </h1>
-            {!isCloud && (
-              <span className="hidden sm:inline-flex text-[9px] font-bold text-[#A69C8D] bg-white border border-[#E8E1D5] px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Demo Mode
-              </span>
-            )}
           </div>
           <p className="text-xs text-[#A69C8D] hidden md:block truncate font-medium">
             {getGreeting()}, <strong className="text-[#242321]">{businessName}</strong>

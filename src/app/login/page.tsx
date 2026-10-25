@@ -256,7 +256,7 @@ export default function LoginPage() {
             href="/"
             className="text-xs font-semibold text-[#A69C8D] hover:text-[#242321] underline decoration-[#E8E1D5] underline-offset-4"
           >
-            Skip to Demo Dashboard &rarr;
+            Continue to Dashboard &rarr;
           </Link>
         </div>
       </div>
