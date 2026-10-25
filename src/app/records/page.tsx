@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import {
   ReceiptText,
   Search,
@@ -20,6 +21,7 @@ import {
   Clock,
   CheckCircle2,
   SlidersHorizontal,
+  UploadCloud,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -365,6 +367,16 @@ export default function RecordsPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <Link href="/documents">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-[#383632] text-white hover:text-white hover:bg-white/10"
+            >
+              <UploadCloud className="w-3.5 h-3.5 mr-1.5 text-[#138C83]" />
+              Import Statements
+            </Button>
+          </Link>
           <Button
             variant="outline"
             size="sm"

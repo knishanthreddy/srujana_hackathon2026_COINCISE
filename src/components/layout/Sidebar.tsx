@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Wallet,
   ReceiptText,
+  UploadCloud,
   ArrowDownLeft,
   ArrowUpRight,
   TrendingUp,
@@ -44,6 +45,7 @@ interface NavItem {
 const allNavItems: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Available Cash", href: "/cash", icon: Wallet },
+  { name: "Document Centre", href: "/documents", icon: UploadCloud, badge: "New", badgeVariant: "primary" },
   { name: "Financial Records", href: "/records", icon: ReceiptText },
   { name: "Receivables", href: "/receivables", icon: ArrowDownLeft, badge: "3 Overdue", badgeVariant: "warning" },
   { name: "Payables", href: "/payables", icon: ArrowUpRight, badge: "Upcoming", badgeVariant: "neutral" },

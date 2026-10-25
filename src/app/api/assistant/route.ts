@@ -38,6 +38,9 @@ const KNOWLEDGE_BASE_RESPONSES: Record<string, string> = {
 
   find_reports:
     "You can generate and export comprehensive financial summaries under **Reports & Analytics** (`/reports`) in the left sidebar.\nThis includes Income & Expense breakdowns, Cash-Flow Forecast summaries, Receivables & Payables ageing tables, and CSV exports.",
+
+  import_documents:
+    "To import bank statements, invoices, or receipts:\n1. Open the **Document Centre** (`/documents`) from the sidebar.\n2. Drag & drop your file (CSV, Excel .xlsx, PDF, OFX/QFX, or scanned image).\n3. Review extracted items, confidence scores, and auto-matched customer invoices or supplier bills.\n4. Click **Confirm & Import** to commit records to your ledger without duplicate entries or double-counting.",
 };
 
 /**
@@ -66,6 +69,9 @@ function matchKnowledgeBase(query: string): string | null {
   }
   if (q.includes("report") || q.includes("analytics") || q.includes("export") || q.includes("csv")) {
     return KNOWLEDGE_BASE_RESPONSES.find_reports;
+  }
+  if (q.includes("import") || q.includes("document") || q.includes("statement") || q.includes("upload") || q.includes("reconcil")) {
+    return KNOWLEDGE_BASE_RESPONSES.import_documents;
   }
 
   return null;
@@ -140,6 +146,7 @@ ROLE AND MISSION:
 
 COINCISE NAVIGATION MAP:
 - Dashboard ('/'): Live available cash, Credro Trust Score, 7/30/60/90-day cash-flow forecast chart, inflows vs outflows, recent transactions.
+- Document Centre ('/documents'): Smart upload and tiered extraction of CSV, Excel, PDF, and image bank statements, invoices, and bills with automated reconciliation.
 - Financial Records ('/records'): Add, edit, delete income/expense transactions, filter by status, export to CSV.
 - Receivables ('/receivables'): Customer invoices, due dates, partial payments, overdue tracking.
 - Payables ('/payables'): Vendor bills, payment schedules, disbursements.

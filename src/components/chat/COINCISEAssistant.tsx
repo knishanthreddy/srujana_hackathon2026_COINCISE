@@ -31,12 +31,12 @@ interface Message {
 }
 
 const SUGGESTED_QUESTIONS = [
+  "How do I import bank statements or invoices?",
   "How do I add a financial transaction?",
   "Where can I find my receivables?",
   "What does my Credro score mean?",
   "How do I understand my cash-flow forecast?",
   "Why am I receiving a cash-shortage alert?",
-  "How do I update my business information?",
   "Where can I find my reports?",
 ];
 

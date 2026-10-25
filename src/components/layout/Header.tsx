@@ -32,6 +32,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "Available Cash",
     subtitle: "Spendable operating funds, bank balances & liquid reserves",
   },
+  "/documents": {
+    title: "Document Centre",
+    subtitle: "Import & reconcile statements, customer invoices & supplier bills",
+  },
   "/records": {
     title: "Financial Records",
     subtitle: "Income and expense transactions ledger with categorization",
