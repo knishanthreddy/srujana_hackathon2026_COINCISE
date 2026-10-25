@@ -65,6 +65,8 @@ import {
   getLiveForecast,
 } from "@/lib/data-service";
 import { getOnboardingData, EVENT_ONBOARDING_UPDATED } from "@/lib/onboarding-service";
+import { calculateCredroScore, recordCredroSnapshot } from "@/lib/credro-score";
+import { CredroCard } from "@/components/dashboard/CredroCard";
 import { FinancialRecord, Receivable, Payable } from "@/lib/types";
 
 type Horizon = 7 | 30 | 60 | 90;
@@ -126,6 +128,20 @@ export default function DashboardPage() {
   const lowestCashInHorizon = liveForecast.lowestCashBalance;
   const isReserveBreachedInHorizon = liveForecast.isReserveBreached;
   const firstReserveBreachDate = liveForecast.firstReserveBreachDate;
+
+  // Credro Business Trust Score (recalculated reactively)
+  const credroResult = useMemo(() => {
+    const res = calculateCredroScore(
+      records,
+      receivables,
+      payables,
+      currentAvailableCash,
+      minimumReserve,
+      onboarding
+    );
+    recordCredroSnapshot(res.score, res.trustLevel);
+    return res;
+  }, [records, receivables, payables, currentAvailableCash, minimumReserve, onboarding]);
 
   // Chart data for Inflows vs Outflows (only days with flows)
   const flowsChartData = displayedForecast
@@ -259,6 +275,9 @@ export default function DashboardPage() {
           }}
         />
       </div>
+
+      {/* 2.5 Credro Business Trust Score Section */}
+      <CredroCard credro={credroResult} />
 
       {/* Dynamic Reserve Breach Alert Banner */}
       {isReserveBreachedInHorizon && (

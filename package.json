@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types tests/forecast-engine.test.ts && node --experimental-strip-types tests/dispute-workflow.test.ts && node --experimental-strip-types tests/onboarding.test.ts && node --experimental-strip-types tests/financial-summary.test.ts"
+    "test": "node --experimental-strip-types tests/forecast-engine.test.ts && node --experimental-strip-types tests/dispute-workflow.test.ts && node --experimental-strip-types tests/onboarding.test.ts && node --experimental-strip-types tests/financial-summary.test.ts && node --experimental-strip-types tests/credro-score.test.ts && node --experimental-strip-types tests/assistant-api.test.ts"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "clsx": "^2.1.1",

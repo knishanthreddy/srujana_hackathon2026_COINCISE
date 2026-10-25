@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { AlertCircle, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
 import { addFinancialRecord } from "@/lib/data-service";
 import { isOnboardingCompleted, EVENT_ONBOARDING_UPDATED } from "@/lib/onboarding-service";
+import { COINCISEAssistant } from "@/components/chat/COINCISEAssistant";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -247,6 +248,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </form>
       </Modal>
+
+      {/* Persistent Floating COINCISE Help Assistant */}
+      <COINCISEAssistant />
     </div>
   );
 }
