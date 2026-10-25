@@ -143,11 +143,11 @@ export async function POST(req: Request) {
     }
 
     // 2. If GEMINI_API_KEY is available:
-    // Use the official Google Generative AI SDK with gemini-1.5-flash
+    // Use the official Google Generative AI SDK with gemini-2.5-flash
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         systemInstruction: `You are the COINCISE Assistant, a helpful, friendly, and concise in-app guide for COINCISE (an AI-powered business finance and cash-flow management platform for Indian MSMEs).
 
 ROLE AND MISSION:

@@ -397,7 +397,7 @@ export default function DocumentCentrePage() {
                           {parseResult.extractionEngine === "excel_native" && "Native SheetJS Excel Parser"}
                           {parseResult.extractionEngine === "ofx_qif_native" && "OFX/QIF Banking Parser"}
                           {parseResult.extractionEngine === "pdf_text" && "PDF Text Extractor"}
-                          {parseResult.extractionEngine === "gemini_multimodal" && "Gemini 1.5 Flash Multimodal Vision"}
+                          {parseResult.extractionEngine === "gemini_multimodal" && "Gemini Multimodal Vision"}
                           {parseResult.extractionEngine === "fallback_heuristic" && "Heuristic Rules"}
                         </strong>
                       </p>
