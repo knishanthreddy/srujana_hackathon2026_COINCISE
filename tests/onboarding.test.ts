@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert";
-import { validateCINFormat, searchMCACompany, MCA_OFFICIAL_PORTAL_URL } from "../src/lib/mca-service.ts";
+import {
+  validateCINFormat,
+  searchMCACompany,
+  MCA_OFFICIAL_PORTAL_URL,
+  MCA_COMPANY_VERIFICATION_URL,
+} from "../src/lib/mca-service.ts";
 import {
   calculateTotalLiquidCash,
   calculateWorkingCapitalAssets,
@@ -62,6 +67,11 @@ test("MCA Search Service: Honest verification and reliable fallbacks", () => {
 
   // Official portal constant integrity
   assert.ok(MCA_OFFICIAL_PORTAL_URL.startsWith("https://www.mca.gov.in"), "Official URL must point to MCA");
+  assert.strictEqual(
+    MCA_COMPANY_VERIFICATION_URL,
+    "https://www.mca.gov.in/content/mca/global/en/mca/master-data/View-Companies-Directors-under-prosecution-V3.html",
+    "MCA Company Verification URL must match exact prosecution master-data destination"
+  );
 });
 
 // =========================================================================

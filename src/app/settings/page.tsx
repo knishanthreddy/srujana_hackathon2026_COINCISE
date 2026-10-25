@@ -44,7 +44,11 @@ import {
   FinancialSummaryResult,
   FinancialValidationError,
 } from "@/lib/financial-summary";
-import { MCA_MASTER_DATA_URL, validateCINFormat } from "@/lib/mca-service";
+import {
+  MCA_MASTER_DATA_URL,
+  MCA_COMPANY_VERIFICATION_URL,
+  validateCINFormat,
+} from "@/lib/mca-service";
 import {
   BusinessEntityType,
   BankAccountItem,
@@ -361,28 +365,41 @@ export default function SettingsPage() {
         {activeTab === "company" && (
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Building className="w-5 h-5 text-teal-700" />
                   <CardTitle>Business Entity & Registration</CardTitle>
                 </div>
 
-                <Badge
-                  variant={
-                    onboarding.verification.verifiedStatus === "verified"
-                      ? "success"
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge
+                    variant={
+                      onboarding.verification.verifiedStatus === "verified"
+                        ? "success"
+                        : onboarding.verification.isFormatValid
+                        ? "info"
+                        : "neutral"
+                    }
+                    size="sm"
+                  >
+                    {onboarding.verification.verifiedStatus === "verified"
+                      ? "MCA Seed Verified"
                       : onboarding.verification.isFormatValid
-                      ? "info"
-                      : "neutral"
-                  }
-                  size="sm"
-                >
-                  {onboarding.verification.verifiedStatus === "verified"
-                    ? "MCA Seed Verified"
-                    : onboarding.verification.isFormatValid
-                    ? "CIN Format Valid"
-                    : "Manual Declaration"}
-                </Badge>
+                      ? "CIN Format Valid"
+                      : "Manual Declaration"}
+                  </Badge>
+
+                  <a
+                    href={MCA_COMPANY_VERIFICATION_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E8E1D5] bg-[#F7F3EA] hover:bg-[#FCE4D8] text-[#242321] hover:text-[#F15A35] text-xs font-bold transition-colors shadow-2xs"
+                    aria-label="Open official MCA company verification portal in a new browser tab"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-[#F15A35]" />
+                    <span>MCA Company Verification</span>
+                  </a>
+                </div>
               </div>
               <CardDescription>
                 Commercial identity for reports, invoice headers, and MSME dispute filings under FairResolve.
@@ -541,17 +558,29 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-between text-xs text-slate-500 border-t border-stone-200">
-                <span>Direct Master Data Verification:</span>
-                <a
-                  href={MCA_MASTER_DATA_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-teal-700 hover:text-teal-900 font-semibold"
-                >
-                  <span>MCA.gov.in Master Data Portal</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+              <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 border-t border-stone-200">
+                <span>Direct Master Data & Corporate Verification:</span>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <a
+                    href={MCA_COMPANY_VERIFICATION_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[#F15A35] hover:text-[#D14420] font-semibold"
+                  >
+                    <span>MCA Company Verification</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <span className="text-stone-300 hidden sm:inline">•</span>
+                  <a
+                    href={MCA_MASTER_DATA_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-teal-700 hover:text-teal-900 font-semibold"
+                  >
+                    <span>MCA.gov.in Master Data Portal</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -11,6 +11,8 @@
 
 export const MCA_OFFICIAL_PORTAL_URL = "https://www.mca.gov.in/content/mca/global/en/home.html";
 export const MCA_MASTER_DATA_URL = "https://www.mca.gov.in/content/mca/global/en/mca/fo-library/company-llp-master-data.html";
+export const MCA_COMPANY_VERIFICATION_URL =
+  "https://www.mca.gov.in/content/mca/global/en/mca/master-data/View-Companies-Directors-under-prosecution-V3.html";
 
 // Standard Indian Corporate Identity Number (CIN) format regex:
 // 1 character (L or U) + 5 digits + 2 letters (State) + 4 digits (Year) + 3 letters (Type e.g. PTC/PLC) + 6 digits (Reg #)
