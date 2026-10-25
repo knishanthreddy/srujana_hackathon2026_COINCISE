@@ -41,6 +41,12 @@ const KNOWLEDGE_BASE_RESPONSES: Record<string, string> = {
 
   import_documents:
     "To import bank statements, invoices, or receipts:\n1. Open the **Document Centre** (`/documents`) from the sidebar.\n2. Drag & drop your file (CSV, Excel .xlsx, PDF, OFX/QFX, or scanned image).\n3. Review extracted items, confidence scores, and auto-matched customer invoices or supplier bills.\n4. Click **Confirm & Import** to commit records to your ledger without duplicate entries or double-counting.",
+
+  create_invoice:
+    "To generate and print an invoice:\n1. Open **Tax Invoices** (`/invoices`) and click **+ Create Invoice** (or visit `/invoices/new`).\n2. Add your customer details and itemized products/services.\n3. Taxes (CGST+SGST or IGST) and totals are automatically calculated based on place of supply.\n4. Click **Generate & Issue Invoice** to save, print/download the PDF, and automatically track the receivable in your cash forecast.",
+
+  government_schemes:
+    "To find government subsidies and credit guarantees for your business:\n1. Visit **Govt Schemes** (`/schemes`) from the left sidebar.\n2. COINCISE automatically matches verified central and state schemes (like CGTMSE, PMEGP, MUDRA, ZED Subsidy) with your industry, state, and Udyam profile.\n3. Review eligibility checklists, required documents, and open the official ministry portal to apply directly.",
 };
 
 /**
@@ -72,6 +78,12 @@ function matchKnowledgeBase(query: string): string | null {
   }
   if (q.includes("import") || q.includes("document") || q.includes("statement") || q.includes("upload") || q.includes("reconcil")) {
     return KNOWLEDGE_BASE_RESPONSES.import_documents;
+  }
+  if (q.includes("create") && (q.includes("invoice") || q.includes("bill") || q.includes("generate invoice") || q.includes("print invoice"))) {
+    return KNOWLEDGE_BASE_RESPONSES.create_invoice;
+  }
+  if (q.includes("scheme") || q.includes("subsidy") || q.includes("subsidies") || q.includes("grant") || q.includes("cgtmse") || q.includes("mudra") || q.includes("pmegp")) {
+    return KNOWLEDGE_BASE_RESPONSES.government_schemes;
   }
 
   return null;
@@ -148,12 +160,14 @@ COINCISE NAVIGATION MAP:
 - Dashboard ('/'): Live available cash, Credro Trust Score, 7/30/60/90-day cash-flow forecast chart, inflows vs outflows, recent transactions.
 - Document Centre ('/documents'): Smart upload and tiered extraction of CSV, Excel, PDF, and image bank statements, invoices, and bills with automated reconciliation.
 - Financial Records ('/records'): Add, edit, delete income/expense transactions, filter by status, export to CSV.
+- Tax Invoices ('/invoices'): Create, preview, print PDF, and manage GST-ready customer invoices with automated tax splitting.
 - Receivables ('/receivables'): Customer invoices, due dates, partial payments, overdue tracking.
 - Payables ('/payables'): Vendor bills, payment schedules, disbursements.
 - Cash Forecast ('/forecast'): Daily projected closing balances, reserve breaches, minimum cash reserve.
 - Scenario Lab ('/scenarios'): Simulate customer payment delays, sales dips, emergency expenses, supplier term shifts.
 - Smart Alerts ('/alerts'): Automated shortage detection, overdue invoice alerts.
 - Decision Centre ('/decision-centre'): Simulate corrective actions like earlier customer collections.
+- Govt Schemes ('/schemes'): Personalized discovery of verified central & state subsidies (CGTMSE, PMEGP, MUDRA, ZED).
 - FairResolve ('/fairresolve'): Payment dispute resolution workflow with official MSME Samadhaan / ODR portal links.
 - Reports & Analytics ('/reports'): Financial summaries, ageing reports, exportable CSVs.
 - Settings ('/settings'): Business profile, bank accounts, minimum reserve, forecast assumptions.

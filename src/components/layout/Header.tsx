@@ -40,6 +40,14 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "Financial Records",
     subtitle: "Income and expense transactions ledger with categorization",
   },
+  "/invoices": {
+    title: "Invoice Management",
+    subtitle: "Generate, preview, print and track GST-ready client invoices",
+  },
+  "/invoices/new": {
+    title: "Create Tax Invoice",
+    subtitle: "Itemized tax invoice builder with auto-tax splitting and bank details",
+  },
   "/receivables": {
     title: "Customer Receivables",
     subtitle: "Customer invoices, collection aging & follow-up tracking",
@@ -63,6 +71,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/decision-centre": {
     title: "Decision Centre",
     subtitle: "Evaluate corrective liquidity actions and projected impact comparisons",
+  },
+  "/schemes": {
+    title: "Government Schemes & Subsidies",
+    subtitle: "Verified central and state schemes matched with your business profile",
   },
   "/credro": {
     title: "Credro™ Trust Score",

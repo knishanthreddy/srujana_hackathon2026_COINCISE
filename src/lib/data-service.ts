@@ -1,4 +1,4 @@
-import {
+import type {
   FinancialRecord,
   Receivable,
   Payable,
@@ -6,27 +6,27 @@ import {
   TransactionType,
   PaymentStatus,
   BusinessSummary,
-} from "./types";
+} from "./types.ts";
 import {
   extractForecastItemsFromData,
   buildForecastItemsWithAssumptions,
   applyScenarioModifiers,
   generateCashForecast,
-  ScenarioModifiers,
-  ForecastSummary,
-} from "./forecast-engine";
-import { getOnboardingData } from "./onboarding-service";
-import { calculateFinancialSummary } from "./financial-summary";
-import { DEMO_RECORDS, DEMO_RECEIVABLES, DEMO_PAYABLES, DEMO_SUMMARY } from "./demo-data";
-import { financialRecordSchema, FinancialRecordFormData } from "./validations/record";
+  type ScenarioModifiers,
+  type ForecastSummary,
+} from "./forecast-engine.ts";
+import { getOnboardingData } from "./onboarding-service.ts";
+import { calculateFinancialSummary } from "./financial-summary.ts";
+import { DEMO_RECORDS, DEMO_RECEIVABLES, DEMO_PAYABLES, DEMO_SUMMARY } from "./demo-data.ts";
+import { financialRecordSchema, type FinancialRecordFormData } from "./validations/record.ts";
 import {
   receivableSchema,
-  ReceivableFormData,
+  type ReceivableFormData,
   payableSchema,
-  PayableFormData,
+  type PayableFormData,
   paymentRecordSchema,
-  PaymentRecordFormData,
-} from "./validations/invoice";
+  type PaymentRecordFormData,
+} from "./validations/invoice.ts";
 
 const STORAGE_KEY_RECORDS = "coincise_financial_records_v1";
 const STORAGE_KEY_RECEIVABLES = "coincise_receivables_v1";
